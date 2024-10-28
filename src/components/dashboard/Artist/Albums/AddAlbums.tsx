@@ -200,7 +200,7 @@ const AddAlbums = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Switch to Single or muiltiple
                   </label>
-                  <div className="relative flex w-20 mr-2 select-none outline-none items-center flex-row justify-center rounded-full shadow-md bg-[#1C4A93]">
+                  <div className="relative flex w-20 mr-2 select-none outline-none items-center flex-row justify-center rounded-full shadow-md bg-[#c9cdd4]">
                     <Switch
                       checked={isMultipleUpload}
                       onChange={handleMultipleUploadToggle}

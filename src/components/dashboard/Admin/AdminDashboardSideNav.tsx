@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AiOutlineClose, AiOutlineMenu } from 'react-icons/ai';
-import { MdDashboard, MdAnalytics, MdNotifications } from 'react-icons/md';
+import { MdDashboard, MdNotifications } from 'react-icons/md';
 import { FaUser } from 'react-icons/fa';
 import { FiShoppingCart, FiSettings, FiTrendingUp } from 'react-icons/fi';
 import { ChevronDown, ChevronRight, Package } from 'lucide-react';
@@ -65,15 +65,7 @@ const sideBarItems = [
       { path: '/admin/notifications/all', name: 'All Notifications' },
       { path: '/admin/notifications/unread', name: 'Unread Notifications' },
     ],
-  },
-  {
-    name: 'Analytics',
-    icon: <MdAnalytics className="icon" />,
-    subItems: [
-      { path: '/admin/analytics/sales', name: 'Sales Analytics' },
-      { path: '/admin/analytics/user-activity', name: 'User Activity' },
-    ],
-  },
+  }
 ];
 
 interface SideBarItemProps {

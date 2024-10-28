@@ -39,6 +39,7 @@ import AdminDashboardHome from "../pages/AdminDashboard.page.tsx";
 import SalesAnalytics from "../pages/SalesAnalytics.page.tsx";
 import AddAlbums from "../components/dashboard/Artist/Albums/AddAlbums.tsx";
 import AllAlbums from "../components/dashboard/Artist/Albums/AllAlbums.tsx";
+import TransactionHistoryPage from "../components/dashboard/Admin/ManageTransaction/TransactionHistoryPage.tsx";
 const AppRoutes: FunctionComponent = () => {
   return (
     <>
@@ -97,6 +98,7 @@ const AppRoutes: FunctionComponent = () => {
           <Route path="/admin/category/add" element={<AdminAddCategoryForm />} />
           <Route path="/admin/category/all" element={<AdminAllCategories />} />
           <Route path="/admin/analytics/sales" element={<SalesAnalytics />} />
+          <Route path="admin/transactions/history" element={<TransactionHistoryPage />} />
 
           </Route>
           {/* <Route element={<AdminDashboard/>}>
