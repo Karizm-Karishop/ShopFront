@@ -6,6 +6,7 @@ import {  FaUser } from 'react-icons/fa';
 import { FiShoppingCart, FiSettings } from 'react-icons/fi';
 import { ChevronDown, ChevronRight, Package } from 'lucide-react';
 import { AiFillProduct } from "react-icons/ai";
+import { IoIosAlbums } from "react-icons/io";
 
 const sideBarItems = [
   {
@@ -33,10 +34,6 @@ const sideBarItems = [
     subItems: [
       { path: '/dashboard/category/add', name: 'Add Category' },
       { path: '/dashboard/category/all', name: 'All Categories' },
-
-      // { path: '/shop/coaching', name: 'Coaching materials', icon: <GiClothes /> },
-      // { path: '/shop/beauty', name: 'Beauty', icon: <GiBasketballBasket /> },
-      // { path: '/shop/fun-club', name: 'Fun Club', icon: <GiBasketballBasket /> },
     ],
   },
   {
@@ -48,6 +45,14 @@ const sideBarItems = [
     ],
   },
   {
+    name: 'Album',
+    icon: <IoIosAlbums className="icon" />,
+    subItems: [
+      { path: '/dashboard/music/album/create', name: 'Create Album' },
+      { path: '/dashboard/music/album/all', name: 'All Album' },
+    ],
+  },
+  {
     name: 'Music',
     icon: <MdMusicNote className="icon" />,
     subItems: [
@@ -55,14 +60,6 @@ const sideBarItems = [
       { path: '/dashboard/music/create', name: 'Create Music' },
     ],
   },
-  // {
-  //   name: 'Fashion',
-  //   icon: <GiClothes className="icon" />,
-  //   subItems: [
-  //     { path: '/fashion/clothes', name: 'Clothes', icon: <FaTshirt /> },
-  //     { path: '/fashion/accessories', name: 'Accessories' },
-  //   ],
-  // },
   {
     name: 'User',
     icon: <FaUser className="icon" />,
