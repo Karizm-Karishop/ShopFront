@@ -13,11 +13,12 @@ function Home() {
         <HelloSection />
       </div>
       <div className='w-full h-auto p-2 lg:pl-10 lg:pr-10 lg:pb-0 md:pl-10 md:pr-10 md:pb-0'>
-       <AlbumTrack/>
-      </div>
-      <div className='w-full h-auto p-2 lg:pl-10 lg:pr-10 lg:pb-0 md:pl-10 md:pr-10 md:pb-0'>
        <ShopsSection/>
       </div>
+      <div className='w-full h-auto p-2 lg:pl-10 lg:pr-10 lg:pb-0 md:pl-10 md:pr-10 md:pb-0'>
+       <AlbumTrack/>
+      </div>
+
       <div className='w-full h-auto p-2 lg:pl-10 lg:pr-10 lg:pb-0 md:pl-10 md:pr-10 md:pb-0'>
        <Creatives/>
       </div>

@@ -37,6 +37,9 @@ import AdminAddCategoryForm from "../components/dashboard/Admin/Category/AddCate
 import AdminAllCategories from "../components/dashboard/Admin/Category/AllCategory.tsx";
 import AdminDashboardHome from "../pages/AdminDashboard.page.tsx";
 import SalesAnalytics from "../pages/SalesAnalytics.page.tsx";
+import AddAlbums from "../components/dashboard/Artist/Albums/AddAlbums.tsx";
+import AllAlbums from "../components/dashboard/Artist/Albums/AllAlbums.tsx";
+import TransactionHistoryPage from "../components/dashboard/Admin/ManageTransaction/TransactionHistoryPage.tsx";
 const AppRoutes: FunctionComponent = () => {
   return (
     <>
@@ -80,6 +83,10 @@ const AppRoutes: FunctionComponent = () => {
           <Route path="/dashboard/books/add" element={<PostBook />} />
           <Route path="/dashboard/books/all" element={<AllBooks />} />
           <Route path="/dashboard/music/create" element={<AddMusicForm />} />
+          <Route path="/dashboard/music/album/create" element={<AddAlbums />} />
+          <Route path="/dashboard/music/album/all" element={<AllAlbums />} />
+
+
           <Route path="/dashboard/music/all" element={<AllMusicTable />} />
           </Route>
           <Route  element={<AdminDashbordLayout />}>
@@ -91,6 +98,7 @@ const AppRoutes: FunctionComponent = () => {
           <Route path="/admin/category/add" element={<AdminAddCategoryForm />} />
           <Route path="/admin/category/all" element={<AdminAllCategories />} />
           <Route path="/admin/analytics/sales" element={<SalesAnalytics />} />
+          <Route path="admin/transactions/history" element={<TransactionHistoryPage />} />
 
           </Route>
           {/* <Route element={<AdminDashboard/>}>
