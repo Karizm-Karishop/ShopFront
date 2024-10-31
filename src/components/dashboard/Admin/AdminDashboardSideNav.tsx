@@ -62,7 +62,7 @@ const sideBarItems = [
     name: 'Notifications',
     icon: <MdNotifications className="icon" />,
     subItems: [
-      { path: '/admin/notifications/all', name: 'All Notifications' },
+      { path: '/admin/notifications/manage', name: 'Manage Notifications' },
       { path: '/admin/notifications/unread', name: 'Unread Notifications' },
     ],
   }
