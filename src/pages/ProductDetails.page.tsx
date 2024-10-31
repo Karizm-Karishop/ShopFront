@@ -5,6 +5,7 @@ import image1 from "../assets/image20.png"
 import image3 from "../assets/image22.png"
 import image4 from "../assets/image23.png"
 import { Rating } from '@mui/material'
+import { Link } from 'react-router-dom'
 
 const ProductDetails: React.FunctionComponent = () => {
     const thumbnails = [main, image1, image3, image4];
@@ -77,10 +78,10 @@ const ProductDetails: React.FunctionComponent = () => {
                                 <span>Size</span>
                                 <span className='flex flex-row items-center py-2'>
                                     {sizes.map((size, index) => (
-                                        <span key={index} 
+                                        <span key={index}
                                             className={`p-2 px-5 ${index === 0 ? 'bg-secondary text-white' : 'bg-gray-200 text-secondary'} 
                                             ${index === 0 ? 'rounded-l-xl' : index === sizes.length - 1 ? 'rounded-r-xl' : ''} 
-                                            ${index==1 ?'border-r-2 border-secondary':''}
+                                            ${index == 1 ? 'border-r-2 border-secondary' : ''}
                                             border-t-2 border-b-2 border-secondary ${index === 0 ? 'border-l-2' : index === sizes.length - 1 ? 'border-r-2' : ''}`}>
                                             {size}
                                         </span>
@@ -110,8 +111,11 @@ const ProductDetails: React.FunctionComponent = () => {
                         </div>
                         <div>
                             <span className='flex flex-row items-center gap-x-3 py-2'>
-                                <button className='border-2 border-secondary font-light w-[50%] p-2 px-3 text-secondary rounded-lg'><ShoppingCartRounded /> Add to cart</button>
-                                <button className='font-light w-[50%] p-3 px-3 text-white bg-secondary rounded-lg'>Checkout</button>
+                                <button className='border-2 border-secondary font-light w-[50%] p-2 px-3 text-secondary rounded-lg'>
+                                    <Link to={'/cart'}><ShoppingCartRounded /> Add to cart</Link></button>
+                                <button className='font-light w-[50%] p-3 px-3 text-white bg-secondary rounded-lg'>
+                                    <Link to={'/checkout'}>Checkout</Link>
+                                </button>
                             </span>
                         </div>
                         <div>
@@ -188,7 +192,7 @@ const ProductDetails: React.FunctionComponent = () => {
                             <div className='p-4'>
                                 <span className='font-bold'>{product.name}</span>
                                 <div className='flex flex-row justify-between py-2 font-bold text-sm'>
-                                    <span>{product.rating}&nbsp;<Star htmlColor='#F3C63F' fontSize='small'/> &nbsp;<span className='text-gray-500'>({product.reviews})</span></span>
+                                    <span>{product.rating}&nbsp;<Star htmlColor='#F3C63F' fontSize='small' /> &nbsp;<span className='text-gray-500'>({product.reviews})</span></span>
                                     <span className='font-bold'>${product.price}</span>
                                 </div>
                             </div>

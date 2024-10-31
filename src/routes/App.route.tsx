@@ -42,6 +42,7 @@ import AllAlbums from "../components/dashboard/Artist/Albums/AllAlbums.tsx";
 import TransactionHistoryPage from "../components/dashboard/Admin/ManageTransaction/TransactionHistoryPage.tsx";
 import ManageNotification from "../components/dashboard/Admin/ManageNotification/ManageNotification.tsx";
 import ManageUnread from "../components/dashboard/Admin/ManageNotification/ManageUnread.tsx";
+import UserAnalytics from "../pages/UserAnalytics.page.tsx";
 const AppRoutes: FunctionComponent = () => {
   return (
     <>
@@ -106,6 +107,7 @@ const AppRoutes: FunctionComponent = () => {
 
 
 
+          <Route path="/admin/analytics/user-activity" element={<UserAnalytics/>} />
           </Route>
           {/* <Route element={<AdminDashboard/>}>
               <Route index path="/admin" element={<AdminDashboardHome/>}/>

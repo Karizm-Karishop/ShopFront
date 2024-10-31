@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AiOutlineClose, AiOutlineMenu } from 'react-icons/ai';
-import { MdDashboard, MdNotifications } from 'react-icons/md';
+import { MdAnalytics, MdDashboard, MdNotifications } from 'react-icons/md';
 import { FaUser } from 'react-icons/fa';
 import { FiShoppingCart, FiSettings, FiTrendingUp } from 'react-icons/fi';
 import { ChevronDown, ChevronRight, Package } from 'lucide-react';
@@ -56,6 +56,14 @@ const sideBarItems = [
     subItems: [
       { path: '/admin/settings/seo', name: 'SEO Metadata' },
       { path: '/admin/settings/policies', name: 'Policies & Terms' },
+    ],
+  },
+  {
+    name: 'Analytics',
+    icon: <MdAnalytics className="icon" />,
+    subItems: [
+      { path: '/admin/analytics/sales', name: 'Sales Analytics' },
+      { path: '/admin/analytics/user-activity', name: 'User Activity' },
     ],
   },
   {
