@@ -5,16 +5,21 @@ import { ExpandMore, AddCircleOutlineRounded } from "@mui/icons-material"
 import mastercard from "../assets/checkout/mastercard.svg"
 import visa from "../assets/checkout/visa.svg"
 import HSButton from "../components/form/HSButton"
-import OrderTracking, { PaymentSuccess, TransactionFail } from "../components/dialog/Dialogs"
-import { useState } from "react"
+import { PaymentSuccess, TransactionFail } from "../components/dialog/Dialogs"
+import { useEffect, useState } from "react"
 
 const Checkout = () => {
-    const [hasSuccess,setHasSuccess]= useState<boolean>(false)
+    const [hasSuccess, setHasSuccess] = useState<boolean>(false)
+    const rand = Math.floor(Math.random() * 10);
+    useEffect(() => {
+        setHasSuccess(hasSuccess);
+    }, [hasSuccess]);
+    console.log(hasSuccess);
     return (
         <>
-        <TransactionFail flag={false}/>
-        <PaymentSuccess flag={hasSuccess}/>
-        <OrderTracking flag={false}/>
+            {
+                rand%2==0?<PaymentSuccess flag={hasSuccess} />: <TransactionFail flag={hasSuccess} />}
+
             <div className="w-[80%] m-auto py-5">
                 <div className="flex max-[634px]:flex-col flex-row justify-between items-center">
                     <div className="w-[50%] max-[330px]:w-full max-[634px]:w-full">
@@ -225,7 +230,7 @@ const Checkout = () => {
                                     </Accordion>
                                 </div>
                                 <div className="py-5">
-                                    <HSButton onClick={()=>{setHasSuccess(true)}} title="Pay Here" styles="w-full py-4 bg-secondary font-bold" />
+                                    <HSButton onClick={() => { setHasSuccess(true)}} title="Pay Here" styles="w-full py-4 bg-secondary font-bold" />
                                 </div>
                             </div>
 

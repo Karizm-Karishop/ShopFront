@@ -7,11 +7,17 @@ import ok from '../../assets/popups/ok.svg'
 import okbg from '../../assets/popups/okbg.svg'
 import nobg from '../../assets/popups/nobg.svg'
 import HSButton from '../form/HSButton'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 
-const OrderTracking = ({flag}:{flag:boolean}) => {
-  const [open,setOpen]= useState<boolean>(flag);
+const OrderTracking = ({ flag }: { flag: boolean }) => {
+  const [open, setOpen] = useState<boolean>(flag);
+
+  useEffect(() => {
+    setOpen(flag);
+  }, [flag]);
+  console.log(open);
   const handleClose = () => {
     setOpen(false);
   };
@@ -62,8 +68,8 @@ const OrderTracking = ({flag}:{flag:boolean}) => {
         </div>
         <DialogActions>
           <div className='flex flex-row justify-center w-full gap-x-5 py-5'>
-            <HSButton title={"Continue shopping"} styles="bg-secondary" />
-            <HSButton onClick={handleClose} title={"Ok"} styles="bg-green text-white"/>
+            <Link to='/shop'><HSButton title={"Continue shopping"} styles="bg-secondary" /></Link>
+            <HSButton onClick={handleClose} title={"Ok"} styles="bg-green text-white" />
           </div>
 
         </DialogActions>
@@ -72,63 +78,80 @@ const OrderTracking = ({flag}:{flag:boolean}) => {
   )
 }
 
-export const PaymentSuccess = ({flag}:{flag:boolean}) => {
-  const [open,setOpen]= useState<boolean>(true);
+export const PaymentSuccess = ({ flag }: { flag: boolean }) => {
+  const [open, setOpen] = useState<boolean>(flag);
+  const [orderOpen, setOrderOpen] = useState<boolean>(false);
   const handleClose = () => {
-    setOpen(!open);
+    setOrderOpen(true);
+    setOpen(!flag);
+  };
+  useEffect(()=>{
+    setOpen(flag);
+  },[flag])
+  return (
+    <>
+      <Dialog open={open}>
+        <DialogTitle>
+          <div className='flex flex-col items-center gap-y-5'>
+            <img src={okbg} alt="" />
+            <p className='text-xl font-bold'>Payment successful</p>
+            <p className='text-sm text-gray-500'>Order #459612445598</p>
+          </div>
+
+        </DialogTitle>
+        <DialogContent>
+          <div className='flex flex-col items-center'>
+            <p className='font-bold text-xl'>10,000 UGX</p>
+          </div>
+          <DialogActions>
+            <div className='flex flex-row justify-center w-full gap-x-5 py-5'>
+              <HSButton title={"Continue shopping"} styles="bg-secondary" />
+              <HSButton title={"View order status"} onClick={handleClose} styles="bg-green text-white" />
+            </div>
+
+          </DialogActions>
+        </DialogContent>
+      </Dialog>
+      <OrderTracking flag={orderOpen} />
+    </>
+  )
+
+}
+
+export const TransactionFail = ({ flag }: { flag: boolean }) => {
+  const [open, setOpen] = useState<boolean>(flag);
+  useEffect(() => {
+    setOpen(flag);
+  }, [flag]);
+  console.log(open);
+  const handleClose = () => {
+    setOpen(false);
   };
   return (
-    <Dialog open={flag&&open}>
-      <DialogTitle>
-        <div className='flex flex-col items-center gap-y-5'>
-          <img src={okbg} alt="" />
-          <p className='text-xl font-bold'>Payment successful</p>
-          <p className='text-sm text-gray-500'>Order #459612445598</p>
-        </div>
-       
-      </DialogTitle>
-      <DialogContent>
-        <div className='flex flex-col items-center'>
-          <p className='font-bold text-xl'>10,000 UGX</p>
-        </div>
-        <DialogActions>
-          <div className='flex flex-row justify-center w-full gap-x-5 py-5'>
-            <HSButton title={"Continue shopping"} styles="bg-secondary" />
-            <HSButton title={"View order status"} onClick={handleClose} styles="bg-green text-white" />
+    <>
+
+      <Dialog open={open} >
+        <DialogTitle>
+          <div className='flex flex-col items-center gap-y-5'>
+            <img src={nobg} alt="" />
+            <p className='text-xl font-bold'>Transaction failed</p>
+            <p className='text-sm text-gray-500'>Order #459612445598</p>
           </div>
 
-        </DialogActions>
-      </DialogContent>
-    </Dialog>
-  )
-
-}
-
-export const TransactionFail = ({flag}:{flag:boolean}) => {
-
-  return (
-    <Dialog open={flag} >
-      <DialogTitle>
-        <div className='flex flex-col items-center gap-y-5'>
-          <img src={nobg} alt="" />
-          <p className='text-xl font-bold'>Transaction failed</p>
-          <p className='text-sm text-gray-500'>Order #459612445598</p>
-        </div>
-       
-      </DialogTitle>
-      <DialogContent>
-        <div className='flex flex-col items-center'>
-          <p className='font-bold text-xl'>10,000 UGX</p>
-        </div>
-        <DialogActions>
-          <div className='flex flex-row justify-center w-full gap-x-5 py-5'>
-            <HSButton title={"Continue shopping"} styles="bg-secondary" />
-            <HSButton title={"View order status"} styles="bg-green text-white" />
+        </DialogTitle>
+        <DialogContent>
+          <div className='flex flex-col items-center'>
+            <p className='font-bold text-xl'>10,000 UGX</p>
           </div>
-
-        </DialogActions>
-      </DialogContent>
-    </Dialog>
+          <DialogActions>
+            <div className='flex flex-row justify-center w-full gap-x-5 py-5'>
+              <Link to={'/shop'}><HSButton title={"Continue shopping"} styles="bg-secondary" /></Link>
+              <HSButton title={"Retry"} styles="bg-green text-white" onClick={handleClose} />
+            </div>
+          </DialogActions>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 
 }
