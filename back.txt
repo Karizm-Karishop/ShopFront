@@ -1,53 +1,101 @@
+
+// src/pages/Login.tsx
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import * as Yup from 'yup';
+import { Formik, Field, ErrorMessage, Form } from 'formik';
+import { useState, useEffect } from 'react';
+import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import { FaEnvelope, FaLock } from 'react-icons/fa';
+import BeatLoader from 'react-spinners/BeatLoader';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../redux/store';
+import { loginUser, initiateGoogleLogin, handleGoogleCallback } from '../redux/slices/LoginSlice';
+
+function Login() {
+  const [showPassword, setShowPassword] = useState(false);
+  const { loading, error, message, needs2FA, user } = useSelector(
+    (state: RootState) => state.loginIn
+  );
+  const dispatch: AppDispatch = useDispatch();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleRedirectBasedOnRole = (role: string) => {
+    switch (role.toLowerCase()) {
+      case 'artist':
+        navigate('/dashboard');
+        break;
+      case 'admin':
+        navigate('/admin');
+        break;
+      case 'client':
+      default:
+        navigate('/');
+        break;
+    }
+  };
+
+  useEffect(() => {
+    // Redirect if already logged in
+    if (user) {
+      handleRedirectBasedOnRole(user.role);
+    }
+
+    // Handle Google OAuth callback
+    const urlParams = new URLSearchParams(location.search);
+    const code = urlParams.get('code');
+    
+    if (code) {
+      dispatch(handleGoogleCallback(code))
+        .unwrap()
+        .then((response) => {
+          handleRedirectBasedOnRole(response.data.user.role);
+        })
+        .catch((error) => {
+          console.error('Google login error:', error);
+        });
+    }
+  }, [dispatch, location, navigate, user]);
+
+  const handleSubmit = (values: { email: string; password: string }) => {
+    dispatch(loginUser(values))
+      .unwrap()
+      .then((response) => {
+        if (response.data.user.is2FAEnabled) {
+          navigate('/two-factor-auth');
+        } else {
+          handleRedirectBasedOnRole(response.data.user.role);
+        }
+      });
+  };
+
+  const handleGoogleLogin = () => {
+    dispatch(initiateGoogleLogin());
+  };
+
+  const validationSchema = Yup.object().shape({
+    email: Yup.string().email('Invalid email').required('Email is required'),
+    password: Yup.string().required('Password is required'),
+  });
+
+  return (
+    // ... rest of your existing Login component JSX remains the same
+  );
+}
+
+export default Login;
+
+// src/routes/AppRoutes.tsx
 import { FunctionComponent } from "react";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
-import HomeLayout from "../Layout/Home.layout";
-import Shop from "../pages/Shop.page.tsx";
-import Home from "../pages/Home.page";
-import Login from "../pages/Login";
-import SignUp from "../pages/SignUp";
-import ContactForm from "../pages/ContactUs";
-import Aboutus from "../pages/AboutUs";
-import PasswordResetRequestForm from "../components/Password/PasswordResetRequest.tsx";
-import TwoFactorAuth from "../pages/TwoFactorAuth.page.tsx";
-import ConfirmToChangePassword from "../components/Password/ConfirmToChangePassword.page.tsx";
-import DisplayProduct from "../components/dashboard/Artist/DisplayProduct.tsx";
-import DashboardLayout from "../components/dashboard/Artist/DashbordLayout.tsx";
-import ArtistDashHome from "../components/dashboard/Artist/ArtistDashHome.tsx";
-import AddProducts from "../components/dashboard/Product/addProducts.tsx";
-import ProductDetails from "../pages/ProductDetails.page.tsx";
-import OrdersTable from "../components/dashboard/Table/OrdersTable.tsx";
-import AddShopForm from "../components/dashboard/Artist/Shop/AddShopForm.tsx";
-import MyShops from "../components/dashboard/Artist/Shop/Myshops.tsx";
-import AddCategoryForm from "../components/dashboard/Artist/Category/AddCategoryForm.tsx";
-import Profile from "../components/dashboard/Artist/Profile/Profile.tsx";
-import PostBook from "../components/dashboard/Artist/Books/PostBook.tsx";
-import AllBooks from "../components/dashboard/Artist/Books/AllBooks.tsx";
-import AllCategories from "../components/dashboard/Artist/Category/AllCategory.tsx";
-import AddMusicForm from "../components/dashboard/Artist/music/AddMusic.tsx";
-import AllMusicTable from "../components/dashboard/Artist/music/AllMusic.tsx";
-import AllProducts from "../components/dashboard/Product/AllProducts.tsx";
-import Cart from "../pages/Cart.page.tsx";
-import Wishlist from "../pages/Wishlist.page.tsx";
-import Checkout from "../pages/checkout.page.tsx";
-import AdminDashbordLayout from "../components/dashboard/Admin/AdminDashbordLayout.tsx";
-import TableUserRole from "../components/dashboard/Admin/TableUserRole.tsx";
-import UserManage from "../components/dashboard/Admin/UserManage.tsx";
-import ShopApprovalTable from "../components/dashboard/Admin/ApprovalShop.tsx";
-import AdminAddCategoryForm from "../components/dashboard/Admin/Category/AddCategoryForm.tsx";
-import AdminAllCategories from "../components/dashboard/Admin/Category/AllCategory.tsx";
-import AdminDashboardHome from "../pages/AdminDashboard.page.tsx";
-import SalesAnalytics from "../pages/SalesAnalytics.page.tsx";
-import AddAlbums from "../components/dashboard/Artist/Albums/AddAlbums.tsx";
-import AllAlbums from "../components/dashboard/Artist/Albums/AllAlbums.tsx";
-import TransactionHistoryPage from "../components/dashboard/Admin/ManageTransaction/TransactionHistoryPage.tsx";
-import ManageNotification from "../components/dashboard/Admin/ManageNotification/ManageNotification.tsx";
-import ManageUnread from "../components/dashboard/Admin/ManageNotification/ManageUnread.tsx";
-import UserAnalytics from "../pages/UserAnalytics.page.tsx";
 import { PrivateRoute } from '../components/auth/PrivateRoute';
+// ... other imports remain the same
+
 const AppRoutes: FunctionComponent = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public routes */}
         <Route element={<HomeLayout />}>
           <Route index path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
@@ -66,6 +114,7 @@ const AppRoutes: FunctionComponent = () => {
           <Route path="/wishlist" element={<Wishlist />} />
         </Route>
 
+        {/* Artist routes */}
         <Route element={
           <PrivateRoute element={<DashboardLayout />} allowedRoles={['artist']} />
         }>
@@ -87,6 +136,7 @@ const AppRoutes: FunctionComponent = () => {
           <Route path="/dashboard/music/all" element={<AllMusicTable />} />
         </Route>
 
+        {/* Admin routes */}
         <Route element={
           <PrivateRoute element={<AdminDashbordLayout />} allowedRoles={['admin']} />
         }>
@@ -108,3 +158,32 @@ const AppRoutes: FunctionComponent = () => {
 };
 
 export default AppRoutes;
+
+// src/utils/axios.ts
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_BASE_URL,
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;

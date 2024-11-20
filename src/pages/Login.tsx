@@ -1,33 +1,61 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate,useSearchParams } from 'react-router-dom';
 import * as Yup from 'yup';
-import { Formik, Field, ErrorMessage, Form, FormikHelpers } from 'formik';
-import { useState } from 'react';
+import { Formik, Field, ErrorMessage, Form } from 'formik';
+import { useState, useEffect } from 'react';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import { FaEnvelope, FaLock } from 'react-icons/fa';
 import BeatLoader from 'react-spinners/BeatLoader';
-
-interface LoginFormValues {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
-
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../Redux/store';
+import { loginUser } from '../Redux/Slices/LoginSlice';
+import {socialLogin} from '../Redux/Slices/LoginSlice';
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const { loading, error,needs2FA, message } = useSelector(
+    (state: RootState) => state.loginIn
+  );
+  const dispatch: AppDispatch = useDispatch();
+  const [searchParams] = useSearchParams();
+
   const navigate = useNavigate();
 
-  const handleSubmit = (
-    _values: LoginFormValues,
-    actions: FormikHelpers<LoginFormValues>
-  ) => {
-    actions.setSubmitting(false);
-    navigate('/dashboard');
+  const handleRedirectBasedOnRole = (role: string) => {
+    switch (role.toLowerCase()) {
+      case 'artist':
+        navigate('/dashboard');
+        break;
+      case 'admin':
+        navigate('/admin');
+        break;
+      case 'client':
+      default:
+        navigate('/');
+        break;
+    }
   };
+
+  useEffect(() => {
+    const socialToken = searchParams.get('token');
+    if (socialToken) {
+      dispatch(socialLogin(socialToken));
+    }
+  }, [searchParams, dispatch]);
+
+  const handleSubmit = (values: { email: string; password: string }) => {
+    dispatch(loginUser(values))
+      .unwrap()
+      .then((response) => {
+        handleRedirectBasedOnRole(response.data.user.role);
+      });
+  };
+
+
 
   const validationSchema = Yup.object().shape({
     email: Yup.string().email('Invalid email').required('Email is required'),
     password: Yup.string().required('Password is required'),
   });
+
 
   return (
     <div className="flex justify-center items-center h-[90vh] sm:h-screen bg-white m-2">
@@ -107,34 +135,34 @@ function Login() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || loading}
                 aria-label="Submit Form"
                 className="w-full flex justify-center py-2 sm:py-4 bg-[#1C4A93] text-white rounded-md hover:bg-blue-[#1C4A93] cursor-pointer transition-transform transform active:scale-95 hover:scale-105"
               >
-                {isSubmitting ? (
-                  <BeatLoader color="#ffffff" size={8} />
-                ) : (
-                  'Login'
-                )}
+                {loading ? <BeatLoader color="#ffffff" size={8} /> : 'Login'}
               </button>
+
+              {needs2FA && <p>Please complete the 2FA process.</p>}
 
               <div>
                 <p className="text-center text-gray-600 text-xs sm:text-sm">
-                  Don’t have an account?{' '}
+                  Don't have an account?{' '}
                   <Link to="/signup" className="text-[#1C4A93] font-bold">
                     Sign up
                   </Link>
                 </p>
               </div>
+
               <div className="flex flex-col items-center text-xs sm:text-sm md:text-lg">
                 <p className="font-light">OR</p>
-                <div className="flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center">
                   <Link
-                    to="#"
                     className="bg-[#1C4A93] w-12 h-12 rounded-full border-2 flex items-center justify-center cursor-pointer transition-transform transform active:scale-95 hover:scale-105"
-                  >
+                    to={`${import.meta.env.VITE_SOCIAL_URL}/auth/google`}                    >
                     <p className="text-white font-bold">G</p>
                   </Link>
+                  {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                  {message && <p className="text-green-500 text-sm mt-2">{message}</p>}
                 </div>
               </div>
             </Form>
