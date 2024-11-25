@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Link, useNavigate,useSearchParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik, Field, ErrorMessage, Form } from 'formik';
@@ -9,6 +10,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../Redux/store';
 import { loginUser } from '../Redux/Slices/LoginSlice';
 import {socialLogin} from '../Redux/Slices/LoginSlice';
+
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { loading, error,needs2FA, message } = useSelector(
@@ -21,34 +23,50 @@ function Login() {
 
   const handleRedirectBasedOnRole = (role: string) => {
     switch (role.toLowerCase()) {
-      case 'artist':
-        navigate('/dashboard');
-        break;
       case 'admin':
         navigate('/admin');
         break;
+      case 'artist':
+        navigate('/dashboard');
+        break;
       case 'client':
-      default:
         navigate('/');
+        break;
+      default:
+        navigate('/login');
         break;
     }
   };
-
+  
   useEffect(() => {
     const socialToken = searchParams.get('token');
     if (socialToken) {
       dispatch(socialLogin(socialToken));
     }
+  
+    const userStr = localStorage.getItem('user');
+    if (userStr && userStr !== 'undefined') {
+      try {
+        const user = JSON.parse(userStr);
+        handleRedirectBasedOnRole(user.role);
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+        localStorage.removeItem('user');
+      }
+    }
   }, [searchParams, dispatch]);
-
   const handleSubmit = (values: { email: string; password: string }) => {
     dispatch(loginUser(values))
       .unwrap()
       .then((response) => {
-        handleRedirectBasedOnRole(response.data.user.role);
+        const user = response.data.user;
+        handleRedirectBasedOnRole(user.role);
+      })
+      .catch((error) => {
+        console.error('Login failed:', error);
       });
   };
-
+  
 
 
   const validationSchema = Yup.object().shape({

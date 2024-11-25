@@ -20,11 +20,21 @@ interface DecodedToken {
   user: User;
 }
 
-
 const loadInitialState = (): LoginState => {
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+
+  let user: User | null = null;
+
+  // Add explicit checks before parsing
+  if (userStr && userStr !== 'undefined') {
+    try {
+      user = JSON.parse(userStr);
+    } catch (error) {
+      console.error('Failed to parse user data from localStorage:', error);
+      localStorage.removeItem('user'); // Clear invalid data
+    }
+  }
 
   return {
     token,
@@ -36,7 +46,6 @@ const loadInitialState = (): LoginState => {
     googleAuthUrl: null,
   };
 };
-let userFromToken: User | null = null;
 
 
 const storeLoginData = (data: { user: User; token: string }) => {
@@ -87,21 +96,15 @@ const loginSlice = createSlice({
       state.message = null;
     },
     socialLogin: (state, action) => {
-      localStorage.setItem('token', action.payload);
-      const decodedToken = jwtDecode<DecodedToken>(action.payload);
-      userFromToken = {
-        user_id: decodedToken.user.user_id,
-        firstName: decodedToken.user.firstName,
-        lastName: decodedToken.user.lastName,
-        email: decodedToken.user.email,
-        profile_picture: decodedToken.user.profile_picture,
-        role: decodedToken.user.role,
-      };
-    
-      state.token = action.payload;
-      state.user = userFromToken;
-      state.user.role = userFromToken.role;
+      const token = action.payload;
+      const decodedToken = jwtDecode<DecodedToken>(token);
+      const user = decodedToken.user;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      state.token = token;
+      state.user = user;
     },
+    
   },
   extraReducers: (builder) => {
     builder
@@ -121,6 +124,7 @@ const loginSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+
     
   },
 });
