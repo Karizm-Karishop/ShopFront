@@ -4,6 +4,10 @@ import * as Yup from 'yup';
 import { Formik, Field, ErrorMessage, Form, FormikHelpers } from 'formik';
 import BeatLoader from 'react-spinners/BeatLoader';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'; // icons for fields
+import { RootState, AppDispatch } from '../Redux/store';
+import { useDispatch,useSelector } from 'react-redux';
+
+import { registerUser } from '../Redux/Slices/SignUpSlice';
 
 interface FormValues {
   firstName: string;
@@ -11,12 +15,14 @@ interface FormValues {
   email: string;
   password: string;
   confirmPassword: string;
-  userType: 'vendor' | 'buyer';
+  role: 'admin' | 'artist' | 'client';
 }
 
 function SignUp() {
+  const dispatch: AppDispatch =useDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const signUpState = useSelector((state: RootState) => state.signUp);
 
   const navigate = useNavigate();
 
@@ -25,11 +31,17 @@ function SignUp() {
     setShowConfirmPassword(!showConfirmPassword);
 
   const handleSubmit = (
-    _values: FormValues,
+    values: FormValues,
     actions: FormikHelpers<FormValues>
   ) => {
-    actions.setSubmitting(false);
-    navigate('/login');
+    dispatch(registerUser(values))
+      .then(() => {
+        actions.setSubmitting(false);
+        navigate('/login');
+      })
+      .catch(() => {
+        actions.setSubmitting(false);
+      });
   };
 
   const renderField = (
@@ -125,7 +137,7 @@ function SignUp() {
             email: '',
             password: '',
             confirmPassword: '',
-            userType: 'buyer',
+            role: 'artist',
           }}
           onSubmit={handleSubmit}
           validationSchema={validationSchema}
@@ -180,8 +192,8 @@ function SignUp() {
               </div>
 
               <div className="flex flex-col items-left justify-between text-gray-600 text-sm md:text-md">
-                {renderField('buyer', 'userType', 'I am a customer', 'radio', null)}
-                {renderField('vendor', 'userType', 'I am an artist', 'radio', null)}
+                {renderField('client', 'userType', 'I am a client', 'radio', null)}
+                {renderField('artist', 'userType', 'I am an artist', 'radio', null)}
                 <ErrorMessage
                   name="userType"
                   component="div"
@@ -192,14 +204,25 @@ function SignUp() {
               <div className="text-xs sm:text-sm text-gray-600">
                 {renderField('agreeCheckbox', 'agreeCheckbox', 'By signing up, I agree with the Terms of Use & Privacy Policy.', 'checkbox', null)}
               </div>
-
+              {signUpState.loading && (
+                <div className="flex justify-center"></div>
+              )}
+              {signUpState.error && (
+                <p className="text-red-500 text-center mt-2">
+                  {signUpState.error}
+                </p>
+              )}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || signUpState.loading}
                 aria-label="Submit Form"
-                className="w-full flex justify-center py-2 sm:py-4 bg-[#1C4A93] text-white rounded-md hover:bg-blue-[#1C4A93] cursor-pointer transition-transform transform active:scale-95 hover:scale-105"
+                className="w-full flex justify-center py-2 sm:py-4 bg-[#1C4A93] text-white"
               >
-                {isSubmitting ? <BeatLoader color="#ffffff" size={8} /> : 'Sign Up'}
+                {isSubmitting || signUpState.loading ? (
+                  <BeatLoader color="#ffffff" size={8} />
+                ) : (
+                  'Sign Up'
+                )}
               </button>
 
               <div>

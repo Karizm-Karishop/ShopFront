@@ -13,7 +13,6 @@ function Navbar() {
 
   return (
     <div className="relative flex items-center justify-between w-full h-16 shadow-sm bg-white">
-      {/* Hamburger menu for small devices */}
       <RxHamburgerMenu
         title="hamburger"
         size="24"
@@ -22,13 +21,11 @@ function Navbar() {
         onClick={() => setToggleMenu(!toggleMenu)}
       />
       
-      {/* Logo Section */}
       <div className="flex items-center gap-2 md:ml-8">
         {/* <img src="/logo.png" alt="logo" className="h-8 w-8" /> */}
         <h2 className="text-textBlack font-bold">Kari Shop</h2>
       </div>
 
-      {/* Navigation for larger devices */}
       <nav className="hidden lg:flex items-center h-full">
         <Link
           to="/"
@@ -72,7 +69,6 @@ function Navbar() {
         </Link>
       </nav>
 
-      {/* Icons and Profile */}
       <div className="flex items-center gap-6 mr-8">
         <div className="flex items-center gap-4">
           <Link className="relative" to="/cart">
@@ -90,7 +86,6 @@ function Navbar() {
           />
         </div>
 
-        {/* Profile Section */}
         <div className="hidden lg:flex items-center gap-2 cursor-pointer" onClick={() => setToggleProfileMenu(!toggleProfileMenu)}>
           <div className="w-8 h-8 rounded-full overflow-hidden">
             <img
@@ -104,7 +99,6 @@ function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu dropdown */}
       {toggleMenu && (
         <div className="bg-white absolute z-20 top-16 left-0 flex flex-col items-start p-4 w-full text-gray-700 shadow-md border-b border-gray-200">
           <Link to="/" className="py-2" onClick={() => setToggleMenu(false)}>Home</Link>
@@ -114,7 +108,6 @@ function Navbar() {
         </div>
       )}
 
-      {/* Profile menu dropdown */}
       {toggleProfileMenu && (
         <div className="bg-white absolute z-20 top-16 right-0 flex flex-col items-start w-52 text-gray-700 shadow-md border-b border-l border-gray-200 py-4">
           <Link to="/profile" className="py-2 px-4" onClick={() => setToggleProfileMenu(false)}>Edit Profile</Link>
