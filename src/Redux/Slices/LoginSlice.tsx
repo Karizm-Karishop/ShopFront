@@ -1,10 +1,12 @@
-
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 
 import { showErrorToast, showSuccessToast } from '../../utilis/ToastProps';
 import { LoginResponse, LoginCredentials, User } from '../../types/auth.types';
+import { NavigateFunction } from 'react-router-dom';
 
 interface LoginState {
   token: string | null;
@@ -17,24 +19,20 @@ interface LoginState {
 }
 
 interface DecodedToken {
-  user: User;
+  userId: number;
+  role: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profile_picture: string | null;
+  iat: number;
+  exp: number;
 }
 
 const loadInitialState = (): LoginState => {
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
-
-  let user: User | null = null;
-
-  // Add explicit checks before parsing
-  if (userStr && userStr !== 'undefined') {
-    try {
-      user = JSON.parse(userStr);
-    } catch (error) {
-      console.error('Failed to parse user data from localStorage:', error);
-      localStorage.removeItem('user'); // Clear invalid data
-    }
-  }
+  const user = userStr ? JSON.parse(userStr) : null;
 
   return {
     token,
@@ -46,7 +44,6 @@ const loadInitialState = (): LoginState => {
     googleAuthUrl: null,
   };
 };
-
 
 const storeLoginData = (data: { user: User; token: string }) => {
   localStorage.setItem('token', data.token);
@@ -61,6 +58,50 @@ const clearLoginData = () => {
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 const loginUrl = `${BASE_URL}/user/login`;
 
+export const socialLoginAction = createAsyncThunk<
+  { token: string; navigate: NavigateFunction },
+  { token: string; navigate: NavigateFunction }
+>(
+  'login/socialLogin',
+  async ({ token, navigate }, { rejectWithValue }) => {
+    try {
+      // Decode the token
+      const decodedToken = jwtDecode<DecodedToken>(token);
+
+      const userData: User = {
+        user_id: decodedToken.userId,
+        firstName: decodedToken.firstName,
+        lastName: decodedToken.lastName,
+        email: decodedToken.email,
+        profile_picture: decodedToken.profile_picture,
+        role: decodedToken.role,
+      };
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      showSuccessToast(`${userData.role.charAt(0).toUpperCase() + userData.role.slice(1)} logged in successfully`);
+
+      switch (userData.role.toLowerCase()) {
+        case 'artist':
+          navigate('/dashboard');
+          break;
+        case 'admin':
+          navigate('/admin');
+          break;
+        case 'client':
+        default:
+          navigate('/');
+          break;
+      }
+
+      return { token, navigate };
+    } catch (error: any) {
+      showErrorToast('Social login failed');
+      return rejectWithValue('Social login failed');
+    }
+  }
+);
 
 export const loginUser = createAsyncThunk<LoginResponse, LoginCredentials>(
   'login/loginUser',
@@ -69,7 +110,6 @@ export const loginUser = createAsyncThunk<LoginResponse, LoginCredentials>(
       const response = await axios.post<LoginResponse>(loginUrl, credentials);
       showSuccessToast(response.data.message);
       return response.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Login failed';
       showErrorToast(errorMessage);
@@ -77,9 +117,6 @@ export const loginUser = createAsyncThunk<LoginResponse, LoginCredentials>(
     }
   }
 );
-
-
-
 
 const loginSlice = createSlice({
   name: 'login',
@@ -95,16 +132,6 @@ const loginSlice = createSlice({
       state.error = null;
       state.message = null;
     },
-    socialLogin: (state, action) => {
-      const token = action.payload;
-      const decodedToken = jwtDecode<DecodedToken>(token);
-      const user = decodedToken.user;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      state.token = token;
-      state.user = user;
-    },
-    
   },
   extraReducers: (builder) => {
     builder
@@ -124,10 +151,23 @@ const loginSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
-    
+      .addCase(socialLoginAction.fulfilled, (state, action) => {
+        const decodedToken = jwtDecode<DecodedToken>(action.payload.token);
+        state.token = action.payload.token;
+        state.user = {
+          user_id: decodedToken.userId,
+          firstName: decodedToken.firstName,
+          lastName: decodedToken.lastName,
+          email: decodedToken.email,
+          profile_picture: decodedToken.profile_picture,
+          role: decodedToken.role,
+        };
+      })
+      .addCase(socialLoginAction.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
   },
 });
 
-export const { logout, clearErrors ,socialLogin} = loginSlice.actions;
+export const { logout, clearErrors } = loginSlice.actions;
 export default loginSlice.reducer;
