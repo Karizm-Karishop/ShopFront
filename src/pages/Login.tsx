@@ -1,4 +1,4 @@
-import { Link, useNavigate,useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import * as Yup from 'yup';
 import { Formik, Field, ErrorMessage, Form } from 'formik';
 import { useState, useEffect } from 'react';
@@ -7,55 +7,47 @@ import { FaEnvelope, FaLock } from 'react-icons/fa';
 import BeatLoader from 'react-spinners/BeatLoader';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../Redux/store';
-import { loginUser } from '../Redux/Slices/LoginSlice';
-import {socialLogin} from '../Redux/Slices/LoginSlice';
+import { loginUser, socialLoginAction } from '../Redux/Slices/LoginSlice';
+
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const { loading, error,needs2FA, message } = useSelector(
+  const { loading, error, needs2FA, message } = useSelector(
     (state: RootState) => state.loginIn
   );
   const dispatch: AppDispatch = useDispatch();
   const [searchParams] = useSearchParams();
-
   const navigate = useNavigate();
-
-  const handleRedirectBasedOnRole = (role: string) => {
-    switch (role.toLowerCase()) {
-      case 'artist':
-        navigate('/dashboard');
-        break;
-      case 'admin':
-        navigate('/admin');
-        break;
-      case 'client':
-      default:
-        navigate('/');
-        break;
-    }
-  };
 
   useEffect(() => {
     const socialToken = searchParams.get('token');
     if (socialToken) {
-      dispatch(socialLogin(socialToken));
+      dispatch(socialLoginAction({ token: socialToken, navigate }));
     }
-  }, [searchParams, dispatch]);
+  }, [searchParams, dispatch, navigate]);
 
   const handleSubmit = (values: { email: string; password: string }) => {
     dispatch(loginUser(values))
       .unwrap()
       .then((response) => {
-        handleRedirectBasedOnRole(response.data.user.role);
+        switch (response.data.user.role.toLowerCase()) {
+          case 'artist':
+            navigate('/dashboard');
+            break;
+          case 'admin':
+            navigate('/admin');
+            break;
+          case 'client':
+          default:
+            navigate('/');
+            break;
+        }
       });
   };
-
-
 
   const validationSchema = Yup.object().shape({
     email: Yup.string().email('Invalid email').required('Email is required'),
     password: Yup.string().required('Password is required'),
   });
-
 
   return (
     <div className="flex justify-center items-center h-[90vh] sm:h-screen bg-white m-2">

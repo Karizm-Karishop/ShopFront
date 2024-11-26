@@ -43,7 +43,7 @@ import TransactionHistoryPage from "../components/dashboard/Admin/ManageTransact
 import ManageNotification from "../components/dashboard/Admin/ManageNotification/ManageNotification.tsx";
 import ManageUnread from "../components/dashboard/Admin/ManageNotification/ManageUnread.tsx";
 import UserAnalytics from "../pages/UserAnalytics.page.tsx";
-import { PrivateRoute } from '../components/auth/PrivateRoute';
+import ProtectedRoute from "../components/auth/ProtectedRoute";
 const AppRoutes: FunctionComponent = () => {
   return (
     <BrowserRouter>
@@ -55,20 +55,34 @@ const AppRoutes: FunctionComponent = () => {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/contact" element={<ContactForm />} />
           <Route path="/about" element={<Aboutus />} />
-          <Route path="/forgot-password" element={<PasswordResetRequestForm />} />
+          <Route
+            path="/forgot-password"
+            element={<PasswordResetRequestForm />}
+          />
           <Route path="/two-factor-auth" element={<TwoFactorAuth />} />
-          <Route path="/change-password" element={<ConfirmToChangePassword />} />
+          <Route
+            path="/change-password"
+            element={<ConfirmToChangePassword />}
+          />
           <Route path="/productDetails" element={<ProductDetails />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={
-            <PrivateRoute element={<Checkout />} allowedRoles={['client']} />
-          } />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute roles={["client"]}>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/wishlist" element={<Wishlist />} />
         </Route>
-
-        <Route element={
-          <PrivateRoute element={<DashboardLayout />} allowedRoles={['artist']} />
-        }>
+        <Route
+          element={
+            <ProtectedRoute roles={["artist"]}>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index path="/dashboard" element={<ArtistDashHome />} />
           <Route path="/dashboard/product" element={<DisplayProduct />} />
           <Route path="/dashboard/product/add" element={<AddProducts />} />
@@ -87,20 +101,36 @@ const AppRoutes: FunctionComponent = () => {
           <Route path="/dashboard/music/all" element={<AllMusicTable />} />
         </Route>
 
-        <Route element={
-          <PrivateRoute element={<AdminDashbordLayout />} allowedRoles={['admin']} />
-        }>
+        <Route
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdminDashbordLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index path="/admin" element={<AdminDashboardHome />} />
           <Route path="/admin/users/roles" element={<TableUserRole />} />
           <Route path="/admin/users/all" element={<UserManage />} />
           <Route path="/admin/shops/approval" element={<ShopApprovalTable />} />
-          <Route path="/admin/category/add" element={<AdminAddCategoryForm />} />
+          <Route
+            path="/admin/category/add"
+            element={<AdminAddCategoryForm />}
+          />
           <Route path="/admin/category/all" element={<AdminAllCategories />} />
           <Route path="/admin/analytics/sales" element={<SalesAnalytics />} />
-          <Route path="admin/transactions/history" element={<TransactionHistoryPage />} />
-          <Route path="admin/notifications/manage" element={<ManageNotification />} />
+          <Route
+            path="admin/transactions/history"
+            element={<TransactionHistoryPage />}
+          />
+          <Route
+            path="admin/notifications/manage"
+            element={<ManageNotification />}
+          />
           <Route path="admin/notifications/unread" element={<ManageUnread />} />
-          <Route path="/admin/analytics/user-activity" element={<UserAnalytics/>} />
+          <Route
+            path="/admin/analytics/user-activity"
+            element={<UserAnalytics />}
+          />
         </Route>
       </Routes>
     </BrowserRouter>

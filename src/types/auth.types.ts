@@ -1,13 +1,13 @@
 export interface User {
-  user_id: number; // Unique ID
+  user_id: number; 
   firstName: string;
   lastName: string;
   email: string;
   role: string;
-  profile_picture?: string; // Optional
-  status?: string; // Optional
-  isVerified?: boolean; // Optional
-  is2FAEnabled?: boolean; // Optional
+  profile_picture?: string | null;
+  status?: string; 
+  isVerified?: boolean; 
+  is2FAEnabled?: boolean; 
 }
 
   
