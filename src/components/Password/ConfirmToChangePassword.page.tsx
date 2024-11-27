@@ -1,8 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 import { useState } from "react";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { resetPassword, clearState } from '../../Redux/Slices/ConfirmToChangePasswordSlice';
+import { RootState } from '../../Redux/store';
+import React from "react";
 
 interface FormValues {
   newPassword: string;
@@ -22,14 +29,28 @@ const ConfirmToChangePassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state: RootState) => state.confirmPasswordReset);
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
   const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleSubmit = (_values: FormValues) => {
-    navigate('/login'); 
+  const handleSubmit = (values: FormValues) => {
+    dispatch(resetPassword({
+      newPassword: values.newPassword,
+      confirmPassword: values.confirmPassword
+    })).then((response:any) => {
+      if (response.type.endsWith('fulfilled')) {
+        navigate('/login');
+      }
+    });
   };
+
+  React.useEffect(() => {
+    return () => {
+      dispatch(clearState());
+    };
+  }, [dispatch]);
 
   return (
     <div className="flex justify-center items-center h-[90vh] p-4">
@@ -37,6 +58,8 @@ const ConfirmToChangePassword = () => {
         <h1 className="text-2xl font-semibold text-center mb-6">
           Change Password
         </h1>
+
+        {error && <div className="text-red text-center mb-4">{error}</div>}
 
         <Formik
           initialValues={{
@@ -106,10 +129,10 @@ const ConfirmToChangePassword = () => {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || loading}
                 className="w-full py-2 bg-[#1C4A93] text-white rounded-md hover:bg-blue-700 transition-transform transform active:scale-95"
               >
-                {isSubmitting ? "Submitting..." : "Change Password"}
+                {loading ? "Submitting..." : "Change Password"}
               </button>
             </Form>
           )}
