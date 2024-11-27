@@ -6,7 +6,7 @@ import BeatLoader from 'react-spinners/BeatLoader';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'; // icons for fields
 import { RootState, AppDispatch } from '../Redux/store';
 import { useDispatch,useSelector } from 'react-redux';
-
+import { Mail } from 'lucide-react';
 import { registerUser } from '../Redux/Slices/SignUpSlice';
 
 interface FormValues {
@@ -23,12 +23,13 @@ function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const signUpState = useSelector((state: RootState) => state.signUp);
-
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
   const navigate = useNavigate();
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword(!showConfirmPassword);
+
 
   const handleSubmit = (
     values: FormValues,
@@ -37,12 +38,34 @@ function SignUp() {
     dispatch(registerUser(values))
       .then(() => {
         actions.setSubmitting(false);
-        navigate('/login');
+        setShowEmailVerificationModal(true);
       })
       .catch(() => {
         actions.setSubmitting(false);
       });
   };
+
+  const renderEmailVerificationModal = () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full">
+        <Mail className="h-16 w-16 text-[#1C4A93] mx-auto mb-4" />
+        <h2 className="text-2xl font-bold mb-4">Check Your Email</h2>
+        <p className="text-gray-600 mb-6">
+          We've sent a verification email to {signUpState.email}. 
+          Please check your inbox and click the verification link to complete your registration.
+        </p>
+        <button 
+          onClick={() => {
+            setShowEmailVerificationModal(false);
+            navigate('/login');
+          }}
+          className="w-full py-2 bg-[#1C4A93] text-white rounded-md hover:bg-[#1C4A93] transition-colors"
+        >
+          OK, I'll Check My Email
+        </button>
+      </div>
+    </div>
+  );
 
   const renderField = (
     id: string,
@@ -128,6 +151,7 @@ function SignUp() {
 
   return (
     <div className="flex justify-center items-center h-[90vh] sm:h-screen bg-white m-2">
+      {showEmailVerificationModal && renderEmailVerificationModal()}
       <div className="w-[80%] md:w-[60%] lg:w-[40%] p-5 shadow-lg border-[1px] border-gray-300 rounded-md">
         <h1 className="text-center font-bold text-3xl mb-4">Sign Up</h1>
         <Formik

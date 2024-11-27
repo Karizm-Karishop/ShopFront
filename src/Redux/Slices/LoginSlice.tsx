@@ -16,6 +16,7 @@ interface LoginState {
   message: string | null;
   needs2FA: boolean;
   googleAuthUrl: string | null;
+  isEmailUnverified: boolean;
 }
 
 interface DecodedToken {
@@ -42,6 +43,7 @@ const loadInitialState = (): LoginState => {
     message: null,
     needs2FA: false,
     googleAuthUrl: null,
+    isEmailUnverified: false
   };
 };
 
@@ -65,7 +67,6 @@ export const socialLoginAction = createAsyncThunk<
   'login/socialLogin',
   async ({ token, navigate }, { rejectWithValue }) => {
     try {
-      // Decode the token
       const decodedToken = jwtDecode<DecodedToken>(token);
 
       const userData: User = {
@@ -103,7 +104,7 @@ export const socialLoginAction = createAsyncThunk<
   }
 );
 
-export const loginUser = createAsyncThunk<LoginResponse, LoginCredentials>(
+export const loginUser = createAsyncThunk<LoginResponse, LoginCredentials & { navigate: NavigateFunction }>(
   'login/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
@@ -112,8 +113,18 @@ export const loginUser = createAsyncThunk<LoginResponse, LoginCredentials>(
       return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Login failed';
-      showErrorToast(errorMessage);
-      return rejectWithValue(errorMessage);
+      const isEmailUnverified = error.response?.data?.error === 'Email not verified';
+      
+      if (isEmailUnverified) {
+        showErrorToast('Please verify your email. A new verification link has been sent.');
+      } else {
+        showErrorToast(errorMessage);
+      }
+      
+      return rejectWithValue({ 
+        errorMessage, 
+        isEmailUnverified 
+      });
     }
   }
 );
@@ -132,25 +143,32 @@ const loginSlice = createSlice({
       state.error = null;
       state.message = null;
     },
+    clearEmailUnverifiedStatus: (state) => {
+      state.isEmailUnverified = false;
+    }
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loginUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(loginUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.token = action.payload.data.token;
-        state.user = action.payload.data.user;
-        state.message = action.payload.message;
-        state.needs2FA = false;
-        storeLoginData(action.payload.data);
-      })
-      .addCase(loginUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
+    .addCase(loginUser.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.isEmailUnverified = false;
+    })
+    .addCase(loginUser.fulfilled, (state, action) => {
+      state.loading = false;
+      state.token = action.payload.data.token;
+      state.user = action.payload.data.user;
+      state.message = action.payload.message;
+      state.needs2FA = false;
+      state.isEmailUnverified = false;
+      storeLoginData(action.payload.data);
+    })
+    .addCase(loginUser.rejected, (state, action) => {
+      state.loading = false;
+      const payload = action.payload as { errorMessage: string, isEmailUnverified?: boolean };
+      state.error = payload.errorMessage;
+      state.isEmailUnverified = payload.isEmailUnverified || false;
+    })
       .addCase(socialLoginAction.fulfilled, (state, action) => {
         const decodedToken = jwtDecode<DecodedToken>(action.payload.token);
         state.token = action.payload.token;
@@ -169,5 +187,5 @@ const loginSlice = createSlice({
   },
 });
 
-export const { logout, clearErrors } = loginSlice.actions;
+export const { logout, clearErrors ,clearEmailUnverifiedStatus} = loginSlice.actions;
 export default loginSlice.reducer;

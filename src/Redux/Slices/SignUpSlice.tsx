@@ -29,11 +29,14 @@ export const registerUser = createAsyncThunk(
   'signUp/registerUser',
   async (
     userData: Omit<SignUpState, 'loading' | 'error'>,
-    { rejectWithValue }
+    { rejectWithValue, dispatch }
   ) => {
     try {
       const response = await axios.post(apiUrl, userData);
-      showSuccessToast('User registered successfully!');
+      showSuccessToast('User registered successfully! Please check your email.');
+      
+      dispatch(setEmail(userData.email));
+      
       return response.data;
     } catch (error) {
       const errorMessage =

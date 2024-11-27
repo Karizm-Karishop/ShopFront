@@ -7,11 +7,11 @@ import { FaEnvelope, FaLock } from 'react-icons/fa';
 import BeatLoader from 'react-spinners/BeatLoader';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../Redux/store';
-import { loginUser, socialLoginAction } from '../Redux/Slices/LoginSlice';
+import { loginUser, socialLoginAction,clearEmailUnverifiedStatus } from '../Redux/Slices/LoginSlice';
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const { loading, error, needs2FA, message } = useSelector(
+  const { loading, error, needs2FA, message , isEmailUnverified } = useSelector(
     (state: RootState) => state.loginIn
   );
   const dispatch: AppDispatch = useDispatch();
@@ -23,10 +23,13 @@ function Login() {
     if (socialToken) {
       dispatch(socialLoginAction({ token: socialToken, navigate }));
     }
-  }, [searchParams, dispatch, navigate]);
 
+        return () => {
+          dispatch(clearEmailUnverifiedStatus());
+        };
+  }, [searchParams, dispatch, navigate]);
   const handleSubmit = (values: { email: string; password: string }) => {
-    dispatch(loginUser(values))
+    dispatch(loginUser({ ...values, navigate }))
       .unwrap()
       .then((response) => {
         switch (response.data.user.role.toLowerCase()) {
@@ -41,7 +44,7 @@ function Login() {
             navigate('/');
             break;
         }
-      });
+      })
   };
 
   const validationSchema = Yup.object().shape({
@@ -53,6 +56,15 @@ function Login() {
     <div className="flex justify-center items-center h-[90vh] sm:h-screen bg-white m-2">
       <div className="w-[80%] md:w-[60%] lg:w-[40%] p-5 shadow-lg border-[1px] border-gray-300 rounded-md ">
         <h1 className="text-center font-bold text-3xl mb-4">Login</h1>
+        {isEmailUnverified && (
+          <div className="bg-[#1C4A93] border border-[#1C4A93] text-white px-4 py-3 rounded relative mb-4" role="alert">
+            <strong className="font-bold text-red text-lg">Email Not Verified! </strong>
+            <span className="block sm:inline">
+              Please check your inbox for a verification link. 
+              A new verification email has been sent.
+            </span>
+          </div>
+        )}
         <Formik
           initialValues={{
             email: '',
@@ -129,7 +141,7 @@ function Login() {
                 type="submit"
                 disabled={isSubmitting || loading}
                 aria-label="Submit Form"
-                className="w-full flex justify-center py-2 sm:py-4 bg-[#1C4A93] text-white rounded-md hover:bg-blue-[#1C4A93] cursor-pointer transition-transform transform active:scale-95 hover:scale-105"
+                className="w-full flex justify-center py-2 sm:py-4 bg-[#1C4A93] text-white rounded-md hover:bg-blue-[#1C4A93] cursor-pointer"
               >
                 {loading ? <BeatLoader color="#ffffff" size={8} /> : 'Login'}
               </button>
