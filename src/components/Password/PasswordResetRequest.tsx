@@ -1,9 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as yup from 'yup';
 import BeatLoader from 'react-spinners/BeatLoader';
 import { Formik, Field, ErrorMessage, Form, FormikHelpers } from 'formik';
 import { FaEnvelope } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-
+import { requestPasswordReset } from '../../Redux/Slices/PasswordResetRequestSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../Redux/store';
 interface MyFormValues {
   email: string;
 }
@@ -17,14 +21,22 @@ const validationSchema: yup.ObjectSchema<MyFormValues> = yup.object({
 
 function PasswordResetRequestForm() {
   const navigate = useNavigate();
+ const dispatch = useDispatch();
 
-    const handleSubmit = (
-        _values: MyFormValues,
-        actions: FormikHelpers<MyFormValues>
-      ) => {
-        actions.setSubmitting(false);
-        navigate('/two-factor-auth');
-      };
+  const { loading } = useSelector((state: RootState) => state.requestPasswordReset);
+
+  const handleSubmit = async (
+    values: MyFormValues,
+    actions: FormikHelpers<MyFormValues>
+  ) => {
+    try {
+      await dispatch(requestPasswordReset(values.email) as any).unwrap();
+      navigate('/two-factor-auth');
+    } catch (error) {
+      actions.setSubmitting(false);
+    }
+  };
+    
     
   return (
     <div className="flex justify-center items-center h-[90vh] sm:h-screen bg-white m-2">
@@ -64,11 +76,11 @@ function PasswordResetRequestForm() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || loading}
                 aria-label="Submit Form"
-                className="w-full flex justify-center py-2 sm:py-4 bg-[#1C4A93] text-white rounded-md hover:bg-blue-[#1C4A93] cursor-pointer transition-transform transform active:scale-95 hover:scale-105"
+                className="w-full flex justify-center py-2 sm:py-4 bg-[#1C4A93] text-white rounded-md hover:bg-blue-[#1C4A93] cursor-pointer"
               >
-                {isSubmitting ? (
+                {isSubmitting || loading ? (
                   <BeatLoader color="#ffffff" size={8} />
                 ) : (
                   'Submit'
@@ -83,24 +95,14 @@ function PasswordResetRequestForm() {
                   </Link>
                 </p>
               </div>
-              <div className="flex flex-col items-center text-xs sm:text-sm md:text-lg">
-                <p className="font-light">OR</p>
-                <div className="flex items-center justify-center">
-                  <Link
-                    to="#"
-                    className="bg-[#1C4A93] w-12 h-12 rounded-full border-2 flex items-center justify-center cursor-pointer transition-transform transform active:scale-95 hover:scale-105"
-                  >
-                    <p className="text-white font-bold">G</p>
-                  </Link>
-                </div>
-              </div>
+
             </Form>
           )}
         </Formik>
 
           <div className="flex items-center gap-2">
             <div className="w-full bg-gray-300 h-px"></div>
-            <p className="font-light">Else</p>
+            <p className="font-light">OR</p>
             <div className="w-full bg-gray-300 h-px"></div>
           </div>
 
