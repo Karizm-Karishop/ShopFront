@@ -44,6 +44,7 @@ import ManageNotification from "../components/dashboard/Admin/ManageNotification
 import ManageUnread from "../components/dashboard/Admin/ManageNotification/ManageUnread.tsx";
 import UserAnalytics from "../pages/UserAnalytics.page.tsx";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
+import ConfirmationEmailVerificationNotifyPage from "../components/ConfirmationPage/ConfirmationEmailVerificationNotifyPage.tsx";
 const AppRoutes: FunctionComponent = () => {
   return (
     <BrowserRouter>
@@ -55,6 +56,7 @@ const AppRoutes: FunctionComponent = () => {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/contact" element={<ContactForm />} />
           <Route path="/about" element={<Aboutus />} />
+          <Route path="/confirmation" element={<ConfirmationEmailVerificationNotifyPage />} />
           <Route
             path="/forgot-password"
             element={<PasswordResetRequestForm />}

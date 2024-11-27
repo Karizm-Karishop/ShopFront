@@ -9,8 +9,7 @@ export interface User {
   isVerified?: boolean; 
   is2FAEnabled?: boolean; 
 }
-
-  
+ 
   export interface LoginResponse {
     success: boolean;
     message: string;
@@ -24,4 +23,5 @@ export interface User {
     email: string;
     password: string;
   }
+  
   

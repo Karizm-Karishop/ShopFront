@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { FaBell, FaAngleDown } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import HSButton from '../../form/HSButton';
 import Profile from '../../../assets/profile.jpg'
+import { logout } from "../../../Redux/Slices/LoginSlice";
+import { useAppDispatch, useAppSelector } from "../../../Redux/hooks";
 function AdminDashBoardNav() {
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.loginIn.user);
   const [toggleProfileMenu, setToggleProfileMenu] = useState(false);
   const navigate = useNavigate();
 
@@ -17,6 +21,9 @@ function AdminDashBoardNav() {
     }
   };
 
+  useEffect(() => {}, [dispatch]);
+
+
   return (
     <div className="relative flex items-center justify-between w-full h-16 shadow-sm px-5">
       <div className="lg:hidden ml-8"></div>
@@ -26,6 +33,7 @@ function AdminDashBoardNav() {
           Dashboard
         </h2>
       </div>
+      {user ? (
       <div className="flex items-center gap-1 sm:gap-8 mr-4 ">
         <div className="relative">
           <FaBell size="20" color="#424856" title="notifications" />
@@ -41,20 +49,22 @@ function AdminDashBoardNav() {
             tabIndex={0}
           >
             <div className="w-8 h-8 rounded-full overflow-hidden">
-              <img
-                src={Profile}
+            <img
+                src={user.profile_picture ?? Profile}
                 className="w-full h-full object-cover"
                 alt="profile"
               />
             </div>
             <div className="flex flex-col items-start">
-              <h2 className="text-black text-sm hidden lg:block">Ambroise Muhayimana</h2>
+              <h2 className="text-black text-sm hidden lg:block">{`${user.firstName} ${user.lastName}`}</h2>
               {/* <span className="text-grey text-xs">{user.role}</span> */}
             </div>
             <FaAngleDown size="15" color="#424856" title="toggleProfile" />
           </div>
-          <HSButton path="/signIn" title="Login" styles="hidden lg:flex" />
       </div>
+          ) : (
+            <HSButton path="/login" title="Login" styles="xs:hidden lg:flex" />
+          )}
       {toggleProfileMenu && (
         <div className="bg-white absolute z-20 top-16 right-0 flex flex-col items-center w-52 shadow-sm py-2 text-grey rounded-b-md border-l border-b border-[#ccc]">
           <div className="flex flex-col w-full gap-2 border-b-[1.5px] border-lightGrey py-2">
@@ -85,11 +95,15 @@ function AdminDashBoardNav() {
             className="border-none outline-none bg-transparent flex gap-2 w-full items-center px-2 border-t-[1.5px] border-lightGrey pt-1 mt-8 cursor-pointer"
             onClick={() => {
               setToggleProfileMenu(false);
-              navigate('/');
+              if (user) {
+                dispatch(logout());
+              } else {
+                navigate("/login");
+              }
             }}
           >
             {/* <img src="/signout.png" width="20" height="20" alt="signout" /> */}
-            <h2>Sign out</h2>
+            {user ? "Sign out" : "Sign in"}
           </button>
         </div>
       )}
