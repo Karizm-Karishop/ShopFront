@@ -1,23 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { MdClose } from 'react-icons/md';
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-const categories: Category[] = [
-  { id: 1, name: 'Music' },
-  { id: 2, name: 'Fashion' },
-  { id: 3, name: 'Art' },
-];
-
+import { useAppSelector } from '../../../Redux/hooks';
+import { RootState } from '../../../Redux/store';
 interface Shop {
     id: number;
     name: string;
     owner: string;
-    icon: string;
-    banner: string;
+    icon: any;
+    banner: any;
     status: "Active" | "Inactive";
     createdDate: string;
     category: number | null;
@@ -35,9 +25,10 @@ interface EditShopModalProps {
 }
 
 const EditShopModal: React.FC<EditShopModalProps> = ({ isOpen, onClose, shopData, onSubmit }) => {
+  const categories= useAppSelector((state: RootState)=> state.categories.categories);
   const [shopName, setShopName] = useState('');
-  const [, setIcon] = useState<File | null>(null);
-  const [, setBannerImage] = useState<File | null>(null);
+  const [icon, setIcon] = useState<File | null>(null);
+  const [banner, setBannerImage] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<number | null>(null);
   const [address, setAddress] = useState('');
@@ -49,23 +40,30 @@ const EditShopModal: React.FC<EditShopModalProps> = ({ isOpen, onClose, shopData
       setShopName(shopData.name);
       setDescription(shopData.description);
       setCategory(shopData.category);
+      setBannerImage(shopData.banner);
+      setIcon(shopData.icon);
       setAddress(shopData.address);
       setContactInfo(shopData.contactInfo);
       setOpeningHours(shopData.openingHours);
     }
-  }, [shopData]);
+  }, [shopData, icon]);
 
   const handleSubmit = (e: React.FormEvent) => {
+
     e.preventDefault();
     if (shopData) {
+      
       onSubmit({
         ...shopData,
         name: shopName,
         description,
+        banner,
+        icon,
         category,
         address,
         contactInfo,
         openingHours,
+       
       });
     }
   };
@@ -116,15 +114,23 @@ const EditShopModal: React.FC<EditShopModalProps> = ({ isOpen, onClose, shopData
               >
                 <option value="">Select Category</option>
                 {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
+                  <option key={cat.category_id} value={cat.category_name}>
+                    {cat.category_name}
                   </option>
                 ))}
               </select>
             </div>
 
             {/* Banner Image */}
+           
             <div className="mb-4">
+            {banner&&
+               ( <img
+                  src={shopData.banner|| banner}
+                  alt="Shop Icon"
+                  className="w-10 h-10 object-cover rounded"
+                />)
+              }
               <label className="block text-sm">Banner Image</label>
               <input
                 type="file"
@@ -136,6 +142,13 @@ const EditShopModal: React.FC<EditShopModalProps> = ({ isOpen, onClose, shopData
 
             {/* Icon */}
             <div className="mb-4">
+              {icon&&
+               ( <img
+                  src={shopData.icon}
+                  alt="Shop Icon"
+                  className="w-10 h-10 object-cover rounded"
+                />)
+              }
               <label className="block text-sm">Icon</label>
               <input
                 type="file"
