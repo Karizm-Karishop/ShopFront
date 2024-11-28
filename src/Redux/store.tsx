@@ -4,6 +4,10 @@ import signInSlice  from "./Slices/LoginSlice";
 import twoFactorAuthReducer from './Slices/twoFactorSlice';
 import confirmPasswordResetReducer from './Slices/ConfirmToChangePasswordSlice';
 import PasswordResetRequestSlice from './Slices/PasswordResetRequestSlice';
+import albumReducer from './Slices/AblumSlices';
+import AddMusicReducer from './Slices/TrackSlices';
+import TrackReducer from './Slices/TrackSlices'
+import ProductReducer from './Slices/addProductSlice'
 export const store = configureStore({
   reducer: {
     signUp: signUpReducer,
@@ -11,7 +15,10 @@ export const store = configureStore({
     requestPasswordReset: PasswordResetRequestSlice,
     twoFactorAuth: twoFactorAuthReducer,
     confirmPasswordReset: confirmPasswordResetReducer,
-
+    album: albumReducer,
+    music: AddMusicReducer,
+    tracks: TrackReducer,
+    product: ProductReducer
 
   },
 });
