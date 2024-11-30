@@ -9,7 +9,7 @@ import {
   setDescription, 
   setCoverImage, 
   createAlbum ,
-  resetalbumState
+  resetAlbumState
 } from '../../../../Redux/Slices/AblumSlices';
 import { RootState, AppDispatch } from '../../../../Redux/store';
 
@@ -64,7 +64,7 @@ const CreateAlbum: React.FC = () => {
   }, [loading, error]);
 
   const resetForm = () => {
-    dispatch(resetalbumState()); 
+    dispatch(resetAlbumState()); 
     
     setCoverPreview("");
     
