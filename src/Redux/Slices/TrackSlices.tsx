@@ -13,6 +13,7 @@ interface TrackMetadata {
 }
 
 interface Track {
+  track_id?: number;
   id?: number;
   title: string;
   artist: string;
@@ -21,6 +22,7 @@ interface Track {
   description?: string;
   file?: string;
   media_url?: string;
+  album_id?: number;
   metadata?: TrackMetadata;
 }
 
@@ -103,6 +105,72 @@ export const createTracks = createAsyncThunk(
   }
 );
 
+export const updateTrack = createAsyncThunk(
+  'tracks/updateTrack',
+  async (trackData: Track, { rejectWithValue }) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return rejectWithValue('No token found');
+    }
+
+    try {
+      const payload = {
+        track_id: trackData.track_id || trackData.id,
+        title: trackData.title,
+        artist: trackData.artist,
+        genre: trackData.genre,
+        description: trackData.description,
+        release_date: trackData.release_date,
+        media_url: trackData.media_url,
+        ...(trackData.album_id && { album_id: trackData.album_id }),
+        ...(trackData.metadata && { metadata: trackData.metadata })
+      };
+
+      const response = await axios.put(apiUrl, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      showSuccessToast('Track updated successfully');
+      
+      return response.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to update track';
+      showErrorToast(errorMessage);
+      
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const fetchAllMusics = createAsyncThunk(
+  'music/fetchAllMusics',
+  async (_, { rejectWithValue }) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return rejectWithValue('No token found');
+    }
+
+    try {
+      const response = await axios.get(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to fetch albums';
+      showErrorToast(errorMessage);
+      
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const trackSlice = createSlice({
   name: 'tracks',
   initialState,
@@ -137,6 +205,25 @@ const trackSlice = createSlice({
         state.tracks = action.payload.data;
       })
       .addCase(createTracks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+       .addCase(updateTrack.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateTrack.fulfilled, (state, action) => {
+        state.loading = false;
+        
+        const updatedTrackIndex = state.tracks.findIndex(
+          track => track.id === action.payload.data.id
+        );
+        
+        if (updatedTrackIndex !== -1) {
+          state.tracks[updatedTrackIndex] = action.payload.data;
+        }
+      })
+      .addCase(updateTrack.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

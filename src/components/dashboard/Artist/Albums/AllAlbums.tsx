@@ -1,4 +1,10 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// @ts-nocheck
+import { useState, useEffect } from "react";
+import BeatLoader from "react-spinners/BeatLoader";
+
+import { useDispatch, useSelector } from "react-redux";
 import {
   Search,
   Trash2,
@@ -11,179 +17,39 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../UI/Card";
 import { MdModeEdit } from "react-icons/md";
-
+import { RootState, AppDispatch } from "../../../../Redux/store";
+import {
+  fetchAllAlbums,
+  deleteAlbum,
+} from "../../../../Redux/Slices/AblumSlices";
+import ConfirmationCard from "../../../ConfirmationPage/ConfirmationCard";
+import EditAlbumModal from "./EditAlbumModal";
 interface Album {
   id: number;
-  title: string;
-  description: string;
-  coverImage: string;
-  artist: string;
-  releaseDate: string;
-  audioCount: number;
-  videoCount: number;
-  totalTracks: number;
-  totalViews: number;
-  totalDownloads: number;
-  totalShares: number;
+  album_title: string;
+  description?: string;
+  cover_image?: string;
+  artist?: string;
+  created_at: Date;
+  updated_at: Date;
+  tracks?: any[];
+  audioCount?: number;
+  videoCount?: number;
+  totalDownloads?: number;
 }
 
-const sampleAlbums: Album[] = [
-  {
-    id: 1,
-    title: "Summer Vibes",
-    description: "A collection of summer hits",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "Various Artists",
-    releaseDate: "2024-01-15",
-    audioCount: 12,
-    videoCount: 3,
-    totalTracks: 15,
-    totalViews: 250000,
-    totalDownloads: 15000,
-    totalShares: 5000,
-  },
-  {
-    id: 2,
-    title: "Chill Beats",
-    description: "Relax with smooth and mellow tracks",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "DJ Serenity",
-    releaseDate: "2023-11-20",
-    audioCount: 10,
-    videoCount: 2,
-    totalTracks: 12,
-    totalViews: 180000,
-    totalDownloads: 12000,
-    totalShares: 3000,
-  },
-  {
-    id: 3,
-    title: "Rock Legends",
-    description: "Greatest rock hits of all time",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "Various Rock Bands",
-    releaseDate: "2022-05-01",
-    audioCount: 15,
-    videoCount: 4,
-    totalTracks: 19,
-    totalViews: 500000,
-    totalDownloads: 30000,
-    totalShares: 7000,
-  },
-  {
-    id: 4,
-    title: "Jazz Classics",
-    description: "Timeless jazz standards",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "Jazz Masters",
-    releaseDate: "2023-02-10",
-    audioCount: 14,
-    videoCount: 1,
-    totalTracks: 15,
-    totalViews: 120000,
-    totalDownloads: 9000,
-    totalShares: 2000,
-  },
-  {
-    id: 5,
-    title: "Hip Hop Essentials",
-    description: "Essential hip-hop tracks from the last decade",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "Hip Hop Icons",
-    releaseDate: "2023-06-05",
-    audioCount: 16,
-    videoCount: 2,
-    totalTracks: 18,
-    totalViews: 400000,
-    totalDownloads: 27000,
-    totalShares: 6000,
-  },
-  {
-    id: 6,
-    title: "Indie Favorites",
-    description: "Top indie tracks of the year",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "Indie Stars",
-    releaseDate: "2023-08-17",
-    audioCount: 11,
-    videoCount: 3,
-    totalTracks: 14,
-    totalViews: 150000,
-    totalDownloads: 8000,
-    totalShares: 2500,
-  },
-  {
-    id: 7,
-    title: "Electronic Essentials",
-    description: "Dance and electronic hits",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "Electro Beats",
-    releaseDate: "2024-02-10",
-    audioCount: 13,
-    videoCount: 4,
-    totalTracks: 17,
-    totalViews: 320000,
-    totalDownloads: 22000,
-    totalShares: 4500,
-  },
-  {
-    id: 8,
-    title: "Country Gold",
-    description: "Top country hits",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "Country Legends",
-    releaseDate: "2023-09-25",
-    audioCount: 12,
-    videoCount: 2,
-    totalTracks: 14,
-    totalViews: 100000,
-    totalDownloads: 6000,
-    totalShares: 1500,
-  },
-  {
-    id: 9,
-    title: "Latin Hits",
-    description: "Popular Latin tracks",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "Latin Stars",
-    releaseDate: "2023-03-30",
-    audioCount: 14,
-    videoCount: 3,
-    totalTracks: 17,
-    totalViews: 290000,
-    totalDownloads: 18000,
-    totalShares: 4000,
-  },
-  {
-    id: 10,
-    title: "Classical Masterpieces",
-    description: "Classical compositions from the greats",
-    coverImage:
-      "https://m.media-amazon.com/images/I/71HR316PilL.__AC_SX300_SY300_QL70_ML2_.jpg",
-    artist: "Orchestra of Classics",
-    releaseDate: "2022-11-11",
-    audioCount: 10,
-    videoCount: 2,
-    totalTracks: 12,
-    totalViews: 200000,
-    totalDownloads: 11000,
-    totalShares: 3000,
-  },
-];
-
 const AllAlbums = () => {
-  const [albums] = useState<Album[]>(sampleAlbums);
+  const dispatch = useDispatch<AppDispatch>();
+  const { albums, loading, totalAlbums } = useSelector(
+    (state: RootState) => state.album
+  );
   const [currentPage, setCurrentPage] = useState(1);
+  const [isConfirmationModalVisible, setModalVisible] = useState(false);
+  const [currentAlbumId, setCurrentAlbumId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
+
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Album | null;
     direction: "asc" | "desc";
@@ -191,18 +57,25 @@ const AllAlbums = () => {
 
   const albumsPerPage = 5;
 
-  const totalAlbums = albums.length;
-  const totalAudio = albums.reduce((sum, album) => sum + album.audioCount, 0);
-  const totalVideo = albums.reduce((sum, album) => sum + album.videoCount, 0);
+  useEffect(() => {
+    dispatch(fetchAllAlbums());
+  }, [dispatch]);
+
+  const totalAudio = albums.reduce(
+    (sum, album) => sum + (album.tracks?.length || 0),
+    0
+  );
+  const totalVideo = 0;
   const totalDownloads = albums.reduce(
-    (sum, album) => sum + album.totalDownloads,
+    (sum, album) => sum + (album.totalDownloads || 0),
     0
   );
 
   const filteredAlbums = albums.filter(
     (album) =>
-      album.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      album.artist.toLowerCase().includes(searchTerm.toLowerCase())
+      album.album_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (album.description &&
+        album.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const sortedAlbums = [...filteredAlbums].sort((a, b) => {
@@ -240,12 +113,27 @@ const AllAlbums = () => {
     });
   };
 
-  const handleEdit = (id: number) => {
-    console.log(`Editing album ${id}`);
+  const handleEdit = (album: Album) => {
+    setSelectedAlbum(album);
+    setIsEditModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    console.log(`Deleting album ${id}`);
+  const handleDeleteClick = (id: number) => {
+    setCurrentAlbumId(id);
+    setModalVisible(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (currentAlbumId !== null) {
+      dispatch(deleteAlbum(currentAlbumId));
+    }
+    setModalVisible(false);
+    setCurrentAlbumId(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setModalVisible(false);
+    setCurrentAlbumId(null);
   };
 
   const SortIcon = ({ column }: { column: keyof Album }) => {
@@ -257,9 +145,16 @@ const AllAlbums = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-row items-center justify-center">
+        <BeatLoader />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
-      {/* Stats Boxes */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-[#1C4A93] flex flex-col justify-center items-center">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-10">
@@ -331,33 +226,33 @@ const AllAlbums = () => {
                 Cover
               </th>
               <th
-                onClick={() => handleSort("title")}
+                onClick={() => handleSort("album_title")}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   Album Title
-                  <SortIcon column="title" />
+                  <SortIcon column="album_title" />
                 </div>
               </th>
               <th
-                onClick={() => handleSort("artist")}
+                onClick={() => handleSort("description")}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
               >
                 <div className="flex items-center gap-2">
-                  Artist
-                  <SortIcon column="artist" />
+                  Description
+                  <SortIcon column="description" />
                 </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Audio/Video
+                Tracks
               </th>
               <th
-                onClick={() => handleSort("releaseDate")}
+                onClick={() => handleSort("created_at")}
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
               >
                 <div className="flex items-center gap-2">
-                  Release Date
-                  <SortIcon column="releaseDate" />
+                  Created At
+                  <SortIcon column="created_at" />
                 </div>
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -370,48 +265,41 @@ const AllAlbums = () => {
               <tr key={album.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <img
-                    src={album.coverImage}
-                    alt={album.title}
+                    src={album.cover_image || "/default-album-cover.png"}
+                    alt={album.album_title}
                     className="w-12 h-12 rounded-md object-cover"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
-                    {album.title}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {album.description}
+                    {album.album_title}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {album.artist}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {album.description || "No description"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
                       <Music className="w-4 h-4 text-blue-500" />
-                      {album.audioCount}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Video className="w-4 h-4 text-red-500" />
-                      {album.videoCount}
+                      {album.tracks?.length || 0}
                     </span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(album.releaseDate).toLocaleDateString()}
+                  {new Date(album.created_at).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-2">
                     <button
-                      onClick={() => handleEdit(album.id)}
+                      onClick={() => handleEdit(album)}
                       className="p-1 text-[#1C4A93] hover:text-blue-800 hover:bg-blue-50 rounded-full outline-none"
                       title="Edit album"
                     >
                       <MdModeEdit className="h-5 w-5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(album.id)}
+                      onClick={() => handleDeleteClick(album.id)}
                       className="p-1 text-red hover:text-red-800 hover:bg-red-50 rounded-full outline-none"
                       title="Delete album"
                     >
@@ -425,7 +313,6 @@ const AllAlbums = () => {
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="flex justify-end gap-1">
         {Array.from({ length: totalPages }, (_, i) => (
           <button
@@ -441,6 +328,18 @@ const AllAlbums = () => {
           </button>
         ))}
       </div>
+
+      <ConfirmationCard
+        isVisible={isConfirmationModalVisible}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        message="Are you sure you want to delete this album?"
+      />
+      <EditAlbumModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        albumToEdit={selectedAlbum}
+      />
     </div>
   );
 };
