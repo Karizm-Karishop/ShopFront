@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAppDispatch, useAppSelector } from '../../../../Redux/hooks';
+import { RootState } from '../../../../Redux/store';
+import { showSuccessToast } from '../../../../utilis/ToastProps';
+import { useNavigate } from 'react-router-dom';
+import { categoryThunk } from '../../../../Redux/Slices/CategorySlice';
 
-interface Category {
-  id: number;
-  name: string;
-}
-
-const getArtistInfo = () => {
-  return { artistId: '12345', artistName: 'Ambroise Doe' };
-};
-
-const categories: Category[] = [
-  { id: 1, name: 'Music' },
-  { id: 2, name: 'Fashion' },
-  { id: 3, name: 'Art' },
-];
+const url = import.meta.env.VITE_BASE_URL;
 
 const AddShopForm: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const categories = useAppSelector((state: RootState) => state.categories.categories);
+  console.log('categories', categories);
+  const navigate = useNavigate()
+  const user = useAppSelector((state: RootState) => state.loginIn.user);
   const [shopName, setShopName] = useState('');
   const [icon, setIcon] = useState<File | null>(null);
   const [bannerImage, setBannerImage] = useState<File | null>(null);
@@ -25,15 +23,9 @@ const AddShopForm: React.FC = () => {
   const [contactInfo, setContactInfo] = useState('');
   const [openingHours, setOpeningHours] = useState('');
 
-  const [artistName, setArtistName] = useState('');
-  const [artistId, setArtistId] = useState('');
-
   useEffect(() => {
-    const artistData = getArtistInfo();
-    setArtistName(artistData.artistName);
-    setArtistId(artistData.artistId); 
+    dispatch(categoryThunk());
   }, []);
-
   const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIcon(e.target.files[0]);
@@ -46,20 +38,40 @@ const AddShopForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    const formData = new FormData();
+    formData.append('shop_name', shopName);
+    formData.append('description', description);
+    formData.append('category_id', `${category}`);
+    formData.append('artist_id', `${user?.user_id}`);
+    formData.append('address', address);
+    formData.append('contact_info', contactInfo);
+    formData.append('opening_hours', openingHours);
+    if (icon) {
+      formData.append('icon', icon);
+    }
+    if (bannerImage) formData.append('banner', bannerImage);
     e.preventDefault();
     console.log({
       shopName,
       icon,
       description,
       category,
-      artistId,
-      artistName,
+      artistId: user?.user_id,
       bannerImage,
       address,
       contactInfo,
       openingHours,
     });
+
+    const response = await axios.post(`${url}/shops`, formData);
+    const data = response.data;
+    console.log("data", data);
+    if (data) {
+      showSuccessToast(response.data.message);
+      navigate('/dashboard/shop/all')
+    }
+
   };
 
   return (
@@ -107,7 +119,7 @@ const AddShopForm: React.FC = () => {
             <input
               type="text"
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={artistName}
+              value={user?.firstName + ' ' + user?.lastName}
               disabled
             />
           </div>
@@ -150,8 +162,8 @@ const AddShopForm: React.FC = () => {
             >
               <option value="">Select Category</option>
               {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
+                <option key={cat.category_id} value={cat.category_id}>
+                  {cat.category_name}
                 </option>
               ))}
             </select>
@@ -213,12 +225,13 @@ const AddShopForm: React.FC = () => {
 
 
         <div className="flex flex-col items-center">
-        <button
-          type="submit"
-          className="w-[30%] bg-[#1C4A93] text-white py-2 rounded-md hover:bg-blue-dark transition"
-        >
-          Create Shop
-        </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="w-[30%] bg-[#1C4A93] text-white py-2 rounded-md hover:bg-blue-dark transition"
+          >
+            Create Shop
+          </button>
         </div>
 
       </form>
@@ -227,3 +240,5 @@ const AddShopForm: React.FC = () => {
 };
 
 export default AddShopForm;
+
+
