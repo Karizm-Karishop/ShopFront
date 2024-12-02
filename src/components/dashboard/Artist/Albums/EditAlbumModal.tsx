@@ -34,7 +34,7 @@ const EditAlbumModal: React.FC<EditAlbumModalProps> = ({
       dispatch(setDescription(albumToEdit.description || ''));
       setCoverPreview(albumToEdit.cover_image || '');
     }
-  }, [albumToEdit]);
+  }, [albumToEdit, dispatch]);
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

@@ -18,6 +18,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "../../../UI/Card";
 import { MdModeEdit } from "react-icons/md";
 import { RootState, AppDispatch } from "../../../../Redux/store";
+import {  useAppSelector } from "../../../../Redux/hooks";
+
 import {
   fetchAllAlbums,
   deleteAlbum,
@@ -40,9 +42,10 @@ interface Album {
 
 const AllAlbums = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { albums, loading, totalAlbums } = useSelector(
+  const { albums = [], loading, totalAlbums } = useSelector(
     (state: RootState) => state.album
   );
+  const user = useAppSelector((state: RootState) => state.loginIn.user);
   const [currentPage, setCurrentPage] = useState(1);
   const [isConfirmationModalVisible, setModalVisible] = useState(false);
   const [currentAlbumId, setCurrentAlbumId] = useState<number | null>(null);
@@ -57,21 +60,22 @@ const AllAlbums = () => {
 
   const albumsPerPage = 5;
 
+
   useEffect(() => {
-    dispatch(fetchAllAlbums());
-  }, [dispatch]);
+    if (user?.user_id) {
+      dispatch(fetchAllAlbums(user.user_id));
+    }
+  }, [dispatch, user?.user_id]);
 
-  const totalAudio = albums.reduce(
-    (sum, album) => sum + (album.tracks?.length || 0),
-    0
-  );
+  const totalAudio = Array.isArray(albums) 
+    ? albums.reduce((sum, album) => sum + (album.tracks?.length || 0), 0)
+    : 0;
   const totalVideo = 0;
-  const totalDownloads = albums.reduce(
-    (sum, album) => sum + (album.totalDownloads || 0),
-    0
-  );
+  const totalDownloads = Array.isArray(albums)
+    ? albums.reduce((sum, album) => sum + (album.totalDownloads || 0), 0)
+    : 0;
 
-  const filteredAlbums = albums.filter(
+  const filteredAlbums = (Array.isArray(albums) ? albums : []).filter(
     (album) =>
       album.album_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (album.description &&

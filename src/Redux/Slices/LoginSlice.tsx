@@ -9,6 +9,7 @@ import { LoginResponse, LoginCredentials, User } from '../../types/auth.types';
 import { NavigateFunction } from 'react-router-dom';
 
 interface LoginState {
+  user_id: any;
   token: string | null;
   user: User | null;
   loading: boolean;

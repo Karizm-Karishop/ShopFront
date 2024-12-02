@@ -8,6 +8,7 @@ const Initialcategory:Category={
     category_id:1,
     category_name:'Fashion',
 }
+
 export const categoryThunk= createAsyncThunk('categories/fetch', 
     async()=>{
         const response= await axios.get(`${import.meta.env.VITE_BASE_URL}/categories`);
@@ -18,6 +19,7 @@ export const categoryThunk= createAsyncThunk('categories/fetch',
         }
     }
 )
+
 const categorySlice= createSlice({
     name:'categoryies',
     initialState: {

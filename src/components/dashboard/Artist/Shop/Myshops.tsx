@@ -84,9 +84,6 @@ const MyShops = () => {
     console.log("Updated Shop:", updatedShop);
 
   const formData = new FormData();
-  // formData.append('shop_name', updatedShop.name);
-  // formData.append('icon', updatedShop.icon || ''); // Only append if a file exists
-  // formData.append('banner', updatedShop.banner || '');
 
   if (updatedShop.icon) {
     formData.append("icon", updatedShop.icon);

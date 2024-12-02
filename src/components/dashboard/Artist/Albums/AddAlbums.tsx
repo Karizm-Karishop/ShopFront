@@ -8,10 +8,11 @@ import {
   setTitle, 
   setDescription, 
   setCoverImage, 
-  createAlbum ,
+  createAlbum,
   resetAlbumState
 } from '../../../../Redux/Slices/AblumSlices';
 import { RootState, AppDispatch } from '../../../../Redux/store';
+import { useAppSelector } from '../../../../Redux/hooks';
 
 const CreateAlbum: React.FC = () => {
 
@@ -19,6 +20,9 @@ const CreateAlbum: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+
+  const user = useAppSelector((state: RootState) => state.loginIn.user);
+
   const { title, description, coverImage, loading, error } = useSelector(
     (state: RootState) => state.album
   );
@@ -46,17 +50,26 @@ const CreateAlbum: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const result = await dispatch(createAlbum({
-      title,
-      description,
-      coverImage
-    }));
-
+  
+    if (!user || !user.user_id) {
+      alert("User information is missing. Please log in again.");
+      return;
+    }
+  
+    const result = await dispatch(
+      createAlbum({
+        title,
+        description,
+        coverImage,
+        artist_id: user.user_id, 
+      })
+    );
+  
     if (createAlbum.fulfilled.match(result)) {
-      navigate('/music-page');
+      navigate('/dashboard/music/album/all');
     }
   };
+  
   useEffect(() => {
     if (!loading && !error) {
       resetForm();
@@ -78,6 +91,15 @@ const CreateAlbum: React.FC = () => {
       setCoverPreview("");
     };
 
+    const navigateToAllAlbum =()=>{
+      navigate('/dashboard/music/album/all');
+
+    }
+
+    const navigateToAddMusic =()=>{
+      navigate('/dashboard/music/create');
+
+    }
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg">
@@ -92,11 +114,13 @@ const CreateAlbum: React.FC = () => {
             </div>
             <div className="flex flex-row justify-between items-center gap-5 ">
             <button
+            onClick={navigateToAllAlbum}
               className=" px-4 py-2 text-[#fff] rounded-md focus:outline-none focus:ring-2 focus:ring-blue bg-[#1C4A93] "
             >
               View Albums
             </button>
             <button
+            onClick={navigateToAddMusic}
               className=" px-4 py-2 text-[#fff] rounded-md focus:outline-none focus:ring-2 focus:ring-blue bg-[#1C4A93] "
             >
               Add Music

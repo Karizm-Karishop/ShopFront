@@ -14,8 +14,9 @@ import Check from "../../../assets/Check.png";
 import { createProduct } from "../../../Redux/Slices/addProductSlice";
 import { uploadSingleImage, uploadGalleryImages } from "../../../utilis/cloud";
 import { showErrorToast } from "../../../utilis/ToastProps";
-import { useDispatch } from "react-redux";
+import { useDispatch ,useSelector} from "react-redux";
 import {  AppDispatch } from "../../../Redux/store";
+import { RootState } from "../../../Redux/store";
 
 interface FormValues {
   name: string;
@@ -30,6 +31,7 @@ interface FormValues {
   gallery: string[];
   tags: string[];
   isAvailable: boolean;
+  artist_id?: number; 
 }
 
 interface Icategory {
@@ -228,10 +230,12 @@ const AddProducts: React.FC = () => {
   const [newTag, setNewTag] = useState("");
   const [category, setCategory] = useState<Icategory[]>([]);
   const [shops, setShops] = useState<Ishop[]>([]);
-
+  const user = useSelector((state: RootState) => state.loginIn);
   const [localImage, setLocalImage] = useState<string | null>(null);
   const [localGallery, setLocalGallery] = useState<string[]>([]);
   const dispatch: AppDispatch = useDispatch();
+
+  
   const addTag = () => {
     const trimmedTag = newTag.trim();
     if (trimmedTag && !tags.includes(trimmedTag)) {
@@ -244,6 +248,7 @@ const AddProducts: React.FC = () => {
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
+
 
   useEffect(() => {
     axios
@@ -282,6 +287,7 @@ const AddProducts: React.FC = () => {
       shop_id: Number(values.shop_id),
       category_id: Number(values.category_id),
       tags,
+      artist_id: user?.user_id, 
     };
 
     await dispatch(createProduct(updatedValues)).unwrap();
@@ -306,6 +312,7 @@ const AddProducts: React.FC = () => {
     gallery: [],
     tags: [],
     isAvailable: true,
+    artist_id: user?.user_id,
   };
   return (
     <Formik

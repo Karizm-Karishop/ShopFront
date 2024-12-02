@@ -1,65 +1,53 @@
-import { useState } from "react";
+import  { useState, useEffect } from "react";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import { IoIosSearch } from "react-icons/io";
+import { useAppDispatch, useAppSelector } from "../../../../Redux/hooks";
+import { RootState } from "../../../../Redux/store";
+import { fetchArtistTracks } from "../../../../Redux/Slices/TrackSlices"; // Adjust import path as needed
+import BeatLoader from "react-spinners/BeatLoader";
 
 interface Music {
   id: number;
-  musicName: string;
-  albumName: string;
-  artistFirstName: string;
-  artistLastName: string;
-  releaseDate: string;
-  uploadMusicFile: string | null;
-  uploadVideoFile: string | null;
-  description: string;
-  price: number;
+  title: string;
+  artist: string;
   genre: string;
-  duration: string;
+  release_date: string;
+  media_url?: string;
+  description?: string;
+  price?: number;
+  duration?: string;
 }
 
-const musicList: Music[] = [
-  {
-    id: 1,
-    musicName: "Song of Hope",
-    albumName: "Hope Album",
-    artistFirstName: "John",
-    artistLastName: "Doe",
-    releaseDate: "2024-06-01",
-    uploadMusicFile: "https://example.com/music1.mp3",
-    uploadVideoFile: "https://example.com/video1.mp4",
-    description: "A hopeful and uplifting song",
-    price: 9.99,
-    genre: "Pop",
-    duration: "3:45",
-  },
-  {
-    id: 2,
-    musicName: "Echoes of Love",
-    albumName: "Heartbeats",
-    artistFirstName: "Emily",
-    artistLastName: "Smith",
-    releaseDate: "2023-11-15",
-    uploadMusicFile: "https://example.com/music2.mp3",
-    uploadVideoFile: "https://example.com/video2.mp4",
-    description: "A soulful ballad about love",
-    price: 12.99,
-    genre: "R&B",
-    duration: "4:10",
-  }
-];
-
 const AllMusicTable = () => {
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state: RootState) => state.loginIn.user);
+  const { tracks, loading, error } = useAppSelector((state: RootState) => state.tracks);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const musicPerPage = 5;
 
+  useEffect(() => {
+    if (user?.user_id) {
+      dispatch(fetchArtistTracks(user.user_id));
+    }
+  }, [dispatch, user?.user_id]);
+
+  const musicList: Music[] = tracks.map((track) => ({
+    id: track.id || track.track_id || 0,
+    title: track.title,
+    artist: track.artist,
+    genre: track.genre,
+    release_date: track.release_date,
+    media_url: track.media_url,
+    description: track.description,
+  }));
+
   const filteredMusic = musicList.filter(
     (music) =>
-      music.musicName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      music.albumName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `${music.artistFirstName} ${music.artistLastName}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+      music.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      music.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      music.genre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const indexOfLastMusic = currentPage * musicPerPage;
@@ -69,15 +57,23 @@ const AllMusicTable = () => {
 
   const handlePageChange = (pageNumber: number) => setCurrentPage(pageNumber);
 
+  if (loading) {
+    return <BeatLoader className="text-center py-4"/>;
+  }
+
+  if (error) {
+    return <div className="text-center py-4 text-red-500">Error: {error}</div>;
+  }
+
   return (
-    <section className="mx-auto p-6 font-mono w-full">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">All Music</h2>
+    <div className="mx-auto p-6 font-mono w-full">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">My Tracks</h2>
 
       <div className="relative mb-4">
         <input
           type="text"
           className="w-full p-2 border border-gray-300 rounded-lg pr-10"
-          placeholder="Search music by name, album, or artist..."
+          placeholder="Search tracks by name, artist, or genre..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -90,15 +86,11 @@ const AllMusicTable = () => {
             <thead>
               <tr className="text-md font-semibold tracking-wide text-gray-900 bg-gray-100 uppercase border-b border-gray-200">
                 <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Music Name</th>
-                <th className="px-4 py-3">Album Name</th>
+                <th className="px-4 py-3">Track Name</th>
                 <th className="px-4 py-3">Artist</th>
-                <th className="px-4 py-3">View Track</th>
-
-                <th className="px-4 py-3">Release Date</th>
-                <th className="px-4 py-3">Price</th>
                 <th className="px-4 py-3">Genre</th>
-                <th className="px-4 py-3">Duration</th>
+                <th className="px-4 py-3">View Track</th>
+                <th className="px-4 py-3">Release Date</th>
                 <th className="px-4 py-3">Action</th>
               </tr>
             </thead>
@@ -107,15 +99,13 @@ const AllMusicTable = () => {
                 currentMusic.map((music) => (
                   <tr className="text-gray-700" key={music.id}>
                     <td className="px-4 py-3 border-b">{music.id}</td>
-                    <td className="px-4 py-3 border-b">{music.musicName}</td>
-                    <td className="px-4 py-3 border-b">{music.albumName}</td>
+                    <td className="px-4 py-3 border-b">{music.title}</td>
+                    <td className="px-4 py-3 border-b">{music.artist}</td>
+                    <td className="px-4 py-3 border-b">{music.genre}</td>
                     <td className="px-4 py-3 border-b">
-                      {music.artistFirstName} {music.artistLastName}
-                    </td>
-                    <td className="px-4 py-3 border-b">
-                      {music.uploadMusicFile && (
+                      {music.media_url && (
                         <a
-                          href={music.uploadMusicFile}
+                          href={music.media_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[#1C4A93] hover:underline"
@@ -124,11 +114,7 @@ const AllMusicTable = () => {
                         </a>
                       )}
                     </td>
-
-                    <td className="px-4 py-3 border-b">{music.releaseDate}</td>
-                    <td className="px-4 py-3 border-b">${music.price}</td>
-                    <td className="px-4 py-3 border-b">{music.genre}</td>
-                    <td className="px-4 py-3 border-b">{music.duration}</td>
+                    <td className="px-4 py-3 border-b">{music.release_date}</td>
                     <td className="px-4 py-3 border-b">
                       <div className="flex items-center space-x-2">
                         <button className="text-[#1C4A93] hover:text-[#537ec5]">
@@ -143,8 +129,8 @@ const AllMusicTable = () => {
                 ))
               ) : (
                 <tr>
-                  <td className="px-4 py-3 text-center" colSpan={9}>
-                    No music found.
+                  <td className="px-4 py-3 text-center" colSpan={7}>
+                    No tracks found.
                   </td>
                 </tr>
               )}
@@ -169,7 +155,7 @@ const AllMusicTable = () => {
           </button>
         ))}
       </div>
-    </section>
+    </div>
   );
 };
 

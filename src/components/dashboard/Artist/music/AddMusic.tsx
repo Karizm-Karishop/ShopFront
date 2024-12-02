@@ -11,6 +11,8 @@ import {
 } from "../../../../Redux/Slices/TrackSlices";
 import { uploadUrlToCloudinary } from "../../../../utilis/cloud"; // Adjust path if necessary
 import BeatLoader from "react-spinners/BeatLoader";
+import {  useAppSelector } from "../../../../Redux/hooks";
+
 interface Ialbum {
   id: number;
   album_title: string;
@@ -38,6 +40,7 @@ const MusicPage: React.FC<MusicPageProps> = () => {
   const { loading, error } = useSelector((state: RootState) => state.tracks);
   const [isUploading, setIsUploading] = useState(false);
   const location = useLocation();
+  const user = useAppSelector((state: RootState) => state.loginIn.user);
 
   const [isMultipleUpload, setIsMultipleUpload] = useState(false);
   const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
@@ -112,19 +115,19 @@ const MusicPage: React.FC<MusicPageProps> = () => {
     setMediaType("audio"); 
     setSelectedAlbum(null);
     setIsMultipleUpload(false); 
-    // Reset multiple upload mode
   };
 
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!selectedAlbum) {
       alert("Please select an album");
       return;
     }
+    
+  
     setIsUploading(true); 
-
+  
     try {
       const uploadedFiles = await Promise.all(
         selectedFiles.map(async (file) => {
@@ -132,15 +135,14 @@ const MusicPage: React.FC<MusicPageProps> = () => {
             console.error("Invalid file object:", file);
             return null;
           }
-
+  
           const uploadedUrl = await uploadUrlToCloudinary(file.originalFile);
           if (uploadedUrl) {
             return {
               title: file.title || "",
-              artist: file.artist || "",
+              artist: file.artist || user?.firstName || "",
               genre: file.genre || "",
-              release_date:
-                file.releaseDate || new Date().toISOString().split("T")[0],
+              release_date: file.releaseDate || new Date().toISOString().split("T")[0],
               description: file.description || "",
               file: uploadedUrl,
             };
@@ -148,9 +150,9 @@ const MusicPage: React.FC<MusicPageProps> = () => {
           return null;
         })
       );
-
+  
       const validTracks = uploadedFiles.filter((file) => file !== null);
-
+  
       if (validTracks.length > 0) {
         await dispatch(
           createTracks({
