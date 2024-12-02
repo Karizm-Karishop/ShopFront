@@ -42,19 +42,20 @@ const apiUrl = `${import.meta.env.VITE_BASE_URL}/albums`;
 
 export const fetchAllAlbums = createAsyncThunk(
   'album/fetchAllAlbums',
-  async (_, { rejectWithValue }) => {
+  async (artist_id: number, { rejectWithValue }) => {
     const token = localStorage.getItem('token');
+
     if (!token) {
       return rejectWithValue('No token found');
     }
 
     try {
-      const response = await axios.get(apiUrl, {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/albums/${artist_id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
+      console.log("Album Data",response.data)
       return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to fetch albums';
@@ -71,7 +72,8 @@ export const createAlbum = createAsyncThunk(
     albumData: { 
       title: string; 
       description: string; 
-      coverImage: File | null 
+      coverImage: File | null; 
+      artist_id: number; 
     }, 
     { rejectWithValue }
   ) => {
@@ -83,7 +85,8 @@ export const createAlbum = createAsyncThunk(
     try {
       const formData = new FormData();
       formData.append('album_title', albumData.title);
-      
+      formData.append('artist_id', albumData.artist_id.toString());
+
       if (albumData.description) {
         formData.append('description', albumData.description);
       }
@@ -100,16 +103,15 @@ export const createAlbum = createAsyncThunk(
       });
 
       showSuccessToast('Album created successfully');
-      
       return response.data;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to create album';
       showErrorToast(errorMessage);
-      
       return rejectWithValue(errorMessage);
     }
   }
 );
+
 
 export const deleteAlbum = createAsyncThunk(
   'album/deleteAlbum',
@@ -145,7 +147,8 @@ export const updateAlbum = createAsyncThunk(
       id: number;
       title: string; 
       description: string; 
-      coverImage: File | null 
+      coverImage: File | null ;
+      
     }, 
     { rejectWithValue }
   ) => {
@@ -204,20 +207,19 @@ const albumSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Albums Reducer
-      .addCase(fetchAllAlbums.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchAllAlbums.fulfilled, (state, action) => {
-        state.loading = false;
-        state.albums = action.payload.data;
-        state.totalAlbums = action.payload.data.length;
-      })
-      .addCase(fetchAllAlbums.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
+    .addCase(fetchAllAlbums.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(fetchAllAlbums.fulfilled, (state, action) => {
+      state.loading = false;
+      state.albums = action.payload.data.albums;
+      state.totalAlbums = action.payload.data.albums.length;
+    })
+    .addCase(fetchAllAlbums.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    })
       
       // Create Album Reducer
       .addCase(createAlbum.pending, (state) => {

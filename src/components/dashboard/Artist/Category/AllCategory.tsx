@@ -1,77 +1,112 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from 'react-redux';
 import { Search } from "lucide-react";
 import { MdDelete, MdModeEdit } from "react-icons/md";
 import EditCategoryModel from "../../PopupModels/EditCategoryModel";
-interface Category {
-  id: number;
-  name: string;
-  parentCategory: string | null;
-  image: string;
-  description: string;
-  seoMetaTags: string;
-}
+import { RootState, AppDispatch } from '../../../../Redux/store'; 
+import { useAppSelector } from "../../../../Redux/hooks";
+import BeatLoader from "react-spinners/BeatLoader";
+import ConfirmationCard from "../../../ConfirmationPage/ConfirmationCard";
 
-const mockCategories: Category[] = Array.from({ length: 50 }, (_, index) => ({
-  id: index + 1,
-  name: `Category ${index + 1}`,
-  parentCategory:
-    index % 5 === 0 ? null : `Category ${Math.floor(index / 5) * 5 + 1}`,
-  image: `/api/placeholder/50/50`,
-  description: `Description for Category ${index + 1}`,
-  seoMetaTags: `SEO tags for Category ${index + 1}`,
-}));
+import { 
+  fetchAllCategoriesByArtist, 
+  Category as CategoryType,
+  deletecategory
+} from '../../../../Redux/Slices/CategorySlices'; 
 
 const AllCategories: React.FC = () => {
-    const [categories, setCategories] = useState<Category[]>(mockCategories);
+    const dispatch = useDispatch<AppDispatch>();
+    const { categories, loading, error } = useSelector((state: RootState) => state.category);
+    const user = useAppSelector((state: RootState) => state.loginIn.user);
+    const [isConfirmationModalVisible, setModalVisible] = useState(false);
+    const [currentCategoryId, setCurrentCategoryId] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false); // Modal control
+    const [selectedCategory, setSelectedCategory] = useState<CategoryType | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const itemsPerPage = 10;
-  
+
     useEffect(() => {
-      const filteredCategories = mockCategories.filter(
-        (category) =>
-          category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          category.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setCategories(filteredCategories);
-      setCurrentPage(1);
-    }, [searchTerm]);
-  
+      if (user?.user_id) {
+        dispatch(fetchAllCategoriesByArtist(user.user_id));
+      }
+    }, [dispatch, user?.user_id]);
+
+    const filteredCategories = useMemo(() => 
+        categories.filter(
+            (category) =>
+                category.category_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                category.description.toLowerCase().includes(searchTerm.toLowerCase())
+        ),
+        [categories, searchTerm]
+    );
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = categories.slice(indexOfFirstItem, indexOfLastItem);
-  
+    const currentItems = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
+
     const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-  
-    const handleEdit = (category: Category) => {
-      setSelectedCategory(category); 
-      setIsModalOpen(true);
+
+    const handleEdit = (category: CategoryType) => {
+        setSelectedCategory(category); 
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteClick = (category_id: number) => {
+      setCurrentCategoryId(category_id);
+      setModalVisible(true);
+    };
+    
+    const handleDeleteConfirm = () => {
+      if (currentCategoryId !== null) {
+        dispatch(deletecategory(currentCategoryId));
+      }
+      setModalVisible(false);
+      setCurrentCategoryId(null);
     };
   
-    const handleDelete = (id: number) => {
-      console.log(`Deleting category with id: ${id}`);
-      setCategories(categories.filter((category) => category.id !== id));
+    const handleDeleteCancel = () => {
+      setModalVisible(false);
+      setCurrentCategoryId(null);
     };
   
+
     const handleModalClose = () => {
-      setIsModalOpen(false);
-      setSelectedCategory(null); 
+        setIsModalOpen(false);
+        setSelectedCategory(null); 
     };
-  
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleSubmit = (updatedCategory: any) => {
-      setCategories((prevCategories) =>
-        prevCategories.map((cat) =>
-          cat.id === updatedCategory.categoryId
-            ? { ...cat, ...updatedCategory }
-            : cat
-        )
-      );
-      setIsModalOpen(false); 
+
+    const handleSubmit = () => {
+        setIsModalOpen(false); 
     };
-  
+
+  if (loading) {
+    return (
+      <div className="flex flex-row items-center justify-center">
+        <BeatLoader />
+      </div>
+    );
+  }
+
+
+    if (error) {
+        return (
+            <div className="container mx-auto p-6 text-red-500">
+                <p>Error loading categories: {error}</p>
+            </div>
+        );
+    }
+
+    // Render empty state
+    if (categories.length === 0) {
+        return (
+            <div className="container mx-auto p-6">
+                <h1 className="text-2xl font-bold mb-4">All Categories</h1>
+                <p className="text-gray-500">No categories found. Create your first category!</p>
+            </div>
+        );
+    }
+
     return (
       <div className="container mx-auto p-6">
         <h1 className="text-2xl font-bold mb-4">All Categories</h1>
@@ -91,10 +126,8 @@ const AllCategories: React.FC = () => {
               <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
                 <th className="py-3 px-6 text-left">ID</th>
                 <th className="py-3 px-6 text-left">Name</th>
-                <th className="py-3 px-6 text-left">Parent Category</th>
-                <th className="py-3 px-6 text-left">Image</th>
+                <th className="py-3 px-6 text-left">Icon</th>
                 <th className="py-3 px-6 text-left">Description</th>
-                <th className="py-3 px-6 text-left">SEO Meta Tags</th>
                 <th className="py-3 px-6 text-left">Actions</th>
               </tr>
             </thead>
@@ -107,19 +140,22 @@ const AllCategories: React.FC = () => {
                   <td className="py-3 px-6 text-left whitespace-nowrap">
                     {category.id}
                   </td>
-                  <td className="py-3 px-6 text-left">{category.name}</td>
+                  <td className="py-3 px-6 text-left">{category.category_name}</td>
+
                   <td className="py-3 px-6 text-left">
-                    {category.parentCategory || "N/A"}
-                  </td>
-                  <td className="py-3 px-6 text-left">
-                    <img
-                      src={category.image}
-                      alt={category.name}
-                      className="w-10 h-10 rounded-full"
-                    />
+                    {category.category_icon ? (
+                      <img
+                        src={typeof category.category_icon === 'string' 
+                          ? category.category_icon 
+                          : URL.createObjectURL(category.category_icon)}
+                        alt={category.category_name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-500">No Icon</span>
+                    )}
                   </td>
                   <td className="py-3 px-6 text-left">{category.description}</td>
-                  <td className="py-3 px-6 text-left">{category.seoMetaTags}</td>
                   <td className="py-3 px-6 text-left">
                     <div className="flex items-center space-x-4">
                       <button
@@ -128,12 +164,14 @@ const AllCategories: React.FC = () => {
                       >
                         <MdModeEdit className="w-5 h-5" color="#1C4A93" />
                       </button>
+                      
                       <button
-                        onClick={() => handleDelete(category.id)}
-                        className="text-red hover:text-red-700 text-lg cursor-pointer"
-                      >
-                        <MdDelete className="w-5 h-5" />
-                      </button>
+  onClick={() => handleDeleteClick(category.category_id)}
+  className="text-red hover:text-red-700 text-lg cursor-pointer"
+>
+  <MdDelete className="w-5 h-5" />
+</button>
+
                     </div>
                   </td>
                 </tr>
@@ -146,20 +184,20 @@ const AllCategories: React.FC = () => {
         <div className="flex justify-between items-center mt-4">
           <div>
             Showing {indexOfFirstItem + 1} to{" "}
-            {Math.min(indexOfLastItem, categories.length)} of {categories.length}{" "}
+            {Math.min(indexOfLastItem, filteredCategories.length)} of {filteredCategories.length}{" "}
             entries
           </div>
           <div className="flex">
             {Array.from(
-              { length: Math.ceil(categories.length / itemsPerPage) },
+              { length: Math.ceil(filteredCategories.length / itemsPerPage) },
               (_, i) => (
                 <button
                   key={i}
                   onClick={() => paginate(i + 1)}
                   className={`mx-1 px-3 py-1 rounded ${
                     currentPage === i + 1
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200"
+                      ? "bg-blue text-white"
+                      : "bg-gray"
                   }`}
                 >
                   {i + 1}
@@ -168,7 +206,12 @@ const AllCategories: React.FC = () => {
             )}
           </div>
         </div>
-  
+        <ConfirmationCard
+        isVisible={isConfirmationModalVisible}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        message="Are you sure you want to delete this category?"
+      />
         {/* Modal */}
         {isModalOpen && selectedCategory && (
           <EditCategoryModel
@@ -182,4 +225,3 @@ const AllCategories: React.FC = () => {
   };
   
   export default AllCategories;
-  

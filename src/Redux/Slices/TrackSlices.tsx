@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { showSuccessToast, showErrorToast } from '../../utilis/ToastProps';
+import { store } from '../store';
 
 interface TrackMetadata {
   file?: {
@@ -52,28 +54,20 @@ export const createTracks = createAsyncThunk(
     { rejectWithValue }
   ) => {
     const token = localStorage.getItem('token');
+    const user = store.getState().loginIn.user;
+    
+
     if (!token) {
       return rejectWithValue('No token found');
     }
 
     try {
-      console.log('Tracks Upload Payload:', {
-        album_id: trackData.album_id,
-        tracks: trackData.tracks.map(track => ({
-          title: track.title,
-          artist: track.artist,
-          genre: track.genre,
-          release_date: track.release_date,
-          description: track.description || '',
-          file: track.file || ''
-        }))
-      });
-
       const payload = {
         album_id: trackData.album_id,
+        artist_id: user?.user_id,
         tracks: trackData.tracks.map(track => ({
           title: track.title,
-          artist: track.artist,
+          artist: track.artist || user?.firstName,
           genre: track.genre,
           release_date: track.release_date,
           description: track.description || '',
@@ -95,7 +89,6 @@ export const createTracks = createAsyncThunk(
       );
       
       return response.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to create tracks';
       showErrorToast(errorMessage);
@@ -136,7 +129,6 @@ export const updateTrack = createAsyncThunk(
       showSuccessToast('Track updated successfully');
       
       return response.data;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to update track';
       showErrorToast(errorMessage);
@@ -146,16 +138,16 @@ export const updateTrack = createAsyncThunk(
   }
 );
 
-export const fetchAllMusics = createAsyncThunk(
-  'music/fetchAllMusics',
-  async (_, { rejectWithValue }) => {
+export const fetchArtistTracks = createAsyncThunk(
+  'tracks/fetchArtistTracks',
+  async (artist_id: number, { rejectWithValue }) => {
     const token = localStorage.getItem('token');
     if (!token) {
       return rejectWithValue('No token found');
     }
 
     try {
-      const response = await axios.get(apiUrl, {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/tracks/${artist_id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -163,7 +155,7 @@ export const fetchAllMusics = createAsyncThunk(
 
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to fetch albums';
+      const errorMessage = error.response?.data?.message || 'Failed to fetch artist tracks';
       showErrorToast(errorMessage);
       
       return rejectWithValue(errorMessage);
@@ -226,9 +218,24 @@ const trackSlice = createSlice({
       .addCase(updateTrack.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
+
+.addCase(fetchArtistTracks.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(fetchArtistTracks.fulfilled, (state, action) => {
+  state.loading = false;
+  state.tracks = action.payload.data || [];
+})
+.addCase(fetchArtistTracks.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload as string;
+})
+
   },
 });
+
 
 export const {
   setTracks,

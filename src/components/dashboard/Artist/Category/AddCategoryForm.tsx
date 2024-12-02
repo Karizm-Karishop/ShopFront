@@ -1,59 +1,107 @@
-import React, { useState } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
-
-interface Category {
-  id: number;
-  name: string;
-}
-
-const categories: Category[] = [
-  { id: 1, name: 'Electronics' },
-  { id: 2, name: 'Fashion' },
-  { id: 3, name: 'Home & Garden' },
-];
-
+import {
+  setName,
+  setDescription,
+  setCategoryIcon,
+  resetcategoryState,
+  createcategory,
+} from "../../../../Redux/Slices/CategorySlices";
+import { RootState, AppDispatch } from "../../../../Redux/store";
+import { useAppSelector } from "../../../../Redux/hooks";
+import { useNavigate } from "react-router-dom";
+import { showErrorToast } from "../../../../utilis/ToastProps";
 
 const AddCategoryForm: React.FC = () => {
-  const [categoryName, setCategoryName] = useState('');
-  const [categoryId] = useState<number>(Math.floor(Math.random() * 10000)); // Auto-generated ID
-  const [parentCategory, setParentCategory] = useState<number | null>(null);
-  const [productsSelected, setProductsSelected] = useState<number[]>([]);
-  const [categoryImage, setCategoryImage] = useState<File | null>(null);
-  const [description, setDescription] = useState('');
-  const [seoMetaTags, setSeoMetaTags] = useState('');
-  const [formMessage, setFormMessage] = useState('');
+  const [formMessage] = useState("");
+  const dispatch = useDispatch<AppDispatch>();
+  const user = useAppSelector((state: RootState) => state.loginIn.user);
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { category_name, description, category_icon, loading, error } =
+    useSelector((state: RootState) => state.category);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setCategoryImage(e.target.files[0]);
+      dispatch(setCategoryIcon(e.target.files[0]));
     }
   };
 
+  useEffect(() => {
+    if (!loading && !error) {
+      resetForm();
+    }
+  }, [loading, error]);
 
+  const resetForm = () => {
+    dispatch(resetcategoryState());
 
-  const handleSubmit = (e: React.FormEvent) => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    switch (name) {
+      case "name":
+        dispatch(setName(value));
+        break;
+      case "description":
+        dispatch(setDescription(value));
+        break;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({
-      categoryName,
-      categoryId,
-      parentCategory,
-      productsSelected,
-      categoryImage,
-      description,
-      seoMetaTags,
-    });
-    setFormMessage('Category created successfully!');
-    // Optionally reset form
-    setCategoryName('');
-    setParentCategory(null);
-    setProductsSelected([]);
-    setCategoryImage(null);
-    setDescription('');
-    setSeoMetaTags('');
+  
+    // Add more robust validation
+    if (!category_name.trim()) {
+      showErrorToast('Category name cannot be empty');
+      return;
+    }
+  
+    if (!description.trim()) {
+      showErrorToast('Description cannot be empty');
+      return;
+    }
+  
+    if (!user || !user.user_id) {
+      showErrorToast('User information is missing. Please log in again.');
+      return;
+    }
+  
+    const result = await dispatch(
+      createcategory({
+        category_name: category_name.trim(), // Trim whitespace
+        description: description.trim(), // Trim whitespace
+        category_icon,
+        artist_id: user.user_id,
+      })
+    );
+  
+    if (createcategory.fulfilled.match(result)) {
+      navigate("/dashboard/category/all");
+    }
   };
 
   return (
     <div className="container mx-auto p-6">
+      {error && (
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="bg-white p-6 shadow rounded-lg">
         <h2 className="text-2xl font-bold mb-4">Add Category</h2>
 
@@ -65,87 +113,57 @@ const AddCategoryForm: React.FC = () => {
             </label>
             <input
               type="text"
+              name="name"
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
+              value={category_name || ''}
+              onChange={handleInputChange}
               required
             />
           </div>
 
-          {/* Category ID (Hidden) */}
-          <input type="hidden" value={categoryId} />
 
-          {/* Parent Category */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">
-              Parent Category
-            </label>
-            <select
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={parentCategory ?? ''}
-              onChange={(e) => setParentCategory(Number(e.target.value))}
-            >
-              <option value="">Select Parent Category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Category Image */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              Category Image
+              Category Icon
             </label>
             <input
               type="file"
+              ref={fileInputRef}
               accept="image/*"
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               onChange={handleImageChange}
             />
           </div>
-          {/* SEO Meta Tags */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              SEO Meta Tags
-            </label>
-            <input
-              type="text"
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={seoMetaTags}
-              onChange={(e) => setSeoMetaTags(e.target.value)}
-            />
-          </div>
-          {/* Description */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">
               Description
             </label>
             <textarea
+              name="description"
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={description || ''}
+              onChange={handleInputChange}
               rows={3}
               required
             />
           </div>
-
-
         </div>
 
         <div className="flex flex-col items-center">
-        <button
-          type="submit"
-          className="w-[30%] bg-[#1C4A93] text-white py-2 rounded-md hover:bg-blue-dark transition"
-        >
-                  Submit
-        </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue 
+                ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#1C4A93] hover:bg-blue-700"
+                }`}
+          >
+            {loading ? "Creating Category..." : "Add New Category"}
+          </button>
         </div>
-        {formMessage && (
-          <p className="mt-4 text-green">{formMessage}</p>
-        )}
+        {formMessage && <p className="mt-4 text-green">{formMessage}</p>}
       </form>
     </div>
   );

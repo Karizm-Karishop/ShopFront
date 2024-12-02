@@ -2,6 +2,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { showSuccessToast, showErrorToast } from '../../utilis/ToastProps';
+import { RootState } from '../store';
 
 interface ProductState {
   name: string;
@@ -14,8 +15,12 @@ interface ProductState {
   sales_price: number;
   tags: string[];
   isAvailable: boolean;
+  artist_id?: number;
   loading: boolean;
   error: string | null;
+  totalAlbums: number; 
+  products?: any[];
+  totalProducts: number;
 }
 
 const initialState: ProductState = {
@@ -31,7 +36,11 @@ const initialState: ProductState = {
   isAvailable: true,
   loading: false,
   error: null,
+  totalAlbums: 0,
+  products: [],
+  totalProducts: 0, 
 };
+
 
 const apiUrl = `${import.meta.env.VITE_BASE_URL}/products`;
 
@@ -39,17 +48,48 @@ export const createProduct = createAsyncThunk(
   'product/createProduct',
   async (
     productData: Omit<ProductState, 'loading' | 'error'>,
-    { rejectWithValue }
+    { rejectWithValue,getState }
   ) => {
+    const state = getState() as RootState;
+    const user = state.loginIn.user;
 
-
+    const productWithArtistId = {
+      ...productData,
+      artist_id: user?.user_id, 
+    };
     try {
-      const response = await axios.post(apiUrl, productData);
+      const response = await axios.post(apiUrl, productWithArtistId);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.message || 'Failed to create product'
       );
+    }
+  }
+);
+
+export const fetchAllProductswithArtist = createAsyncThunk(
+  'product/fetchAllproducts',
+  async (artist_id: number, { rejectWithValue }) => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      return rejectWithValue('No token found');
+    }
+
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/products/artist/${artist_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Product Data",response.data)
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to fetch Products';
+      showErrorToast(errorMessage);
+      
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -104,7 +144,21 @@ const addProductSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         showErrorToast(state.error);
-      });
+      })
+
+      .addCase(fetchAllProductswithArtist.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllProductswithArtist.fulfilled, (state, action) => {
+        state.loading = false;
+        state.products = action.payload.data.products;
+        state.totalProducts = action.payload.data.products.length;
+      })
+      .addCase(fetchAllProductswithArtist.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
   },
 });
 
