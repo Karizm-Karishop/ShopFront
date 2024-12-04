@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   Trash2,
   Edit,
@@ -19,6 +19,8 @@ import {
 } from "../../UI/Dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "../../UI/Card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../UI/Tabs";
+import axios from "axios";
+import { showErrorToast, showSuccessToast } from "../../../utilis/ToastProps";
 
 interface Role {
   id: number;
@@ -33,67 +35,35 @@ interface Role {
 
 interface Permission {
   id: string;
-  label: string;
+  name: string;
 }
 
-interface FormData {
-  name: string;
-  description: string;
-  permissions: string[];
-  expiryDate: string | null;
-}
 
 interface Notification {
   message: string;
   type: "success" | "error";
 }
 
-const initialRoles: Role[] = [
-  {
-    id: 1,
-    name: "Admin",
-    description: "Full system access",
-    permissions: ["create", "read", "update", "delete"],
-    users: ["John Doe", "Jane Smith"],
-    isActive: true,
-    createdAt: "2024-01-01",
-  },
-  {
-    id: 2,
-    name: "Editor",
-    description: "Can edit content",
-    permissions: ["read", "update"],
-    users: ["Bob Johnson"],
-    isActive: true,
-    createdAt: "2024-01-02",
-  },
-];
 
-const initialPermissionsList: Permission[] = [
-  { id: "create", label: "Create" },
-  { id: "read", label: "Read" },
-  { id: "update", label: "Update" },
-  { id: "delete", label: "Delete" },
-  { id: "approve", label: "Approve" },
-  { id: "publish", label: "Publish" },
-];
+
 
 const UserRoleManagement = () => {
-  const [roles, setRoles] = useState<Role[]>(initialRoles);
-  const [, setSelectedRole] = useState<Role | null>(null);
+  const BASE_URL = import.meta.env.VITE_BASE_URL;
+  const [roles, setRoles] = useState<any>([]);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [count, setCount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const [dialogType, setDialogType] = useState<"add" | "edit">("add");
   const [notification, setNotification] = useState<Notification | null>(null);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<any>({
     name: "",
     description: "",
     permissions: [],
-    expiryDate: null,
   });
 
   const [permissionsList, setPermissionsList] = useState<Permission[]>(
-    initialPermissionsList
+    []
   );
   const [newPermission, setNewPermission] = useState<string>("");
 
@@ -104,45 +74,115 @@ const UserRoleManagement = () => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
+  const handleFetchRoles = async () => {
+    const response = await axios.get(`${BASE_URL}/roles/all-roles`)
+    if (response.status === 200) {
+      setRoles(response.data);
+      setCount((prev) => prev + 1);
+    }
+  }
+  const handleCreateRole = async () => {
+    const res = await axios.post(`${BASE_URL}/roles/create-role`, {
+      name: formData.name,
+      description: formData.description,
+      permissions: formData.permissions
+    }, {
+      headers: {
+        "Content-type": "application/json"
+      }
+    }
+    )
+    if (res.data) {
+      setRoles(res.data);
+      showSuccessToast("Role created successfully")
+      console.log(res.data);
 
-  const handleAddRole = () => {
-    setIsSubmitting(true);
-    setTimeout(() => {
-      const newRole: Role = {
-        id: roles.length + 1,
+    }
+    else {
+      showErrorToast('Failed to create role');
+    }
+  }
+  const handleFetchPermissions = async () => {
+    const response = await axios.get(`${BASE_URL}/permissions/all-permissions`)
+    if (response.status === 200) {
+      setPermissionsList(response.data);
+    }
+  }
+  const handleUpdateRole = async () => {
+    if (selectedRole){
+      const res = await axios.patch(`${BASE_URL}/roles/update-role/${selectedRole.id}`, {
         name: formData.name,
         description: formData.description,
-        permissions: formData.permissions,
-        users: [],
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        expiryDate: formData.expiryDate,
-      };
-      setRoles([...roles, newRole]);
-      setFormData({
-        name: "",
-        description: "",
-        permissions: [],
-        expiryDate: null,
-      });
-      showNotification("Role added successfully");
-      setIsSubmitting(false);
-      setShowDialog(false);
-    }, 1000);
+        permissions: formData.permissions
+      }, {
+        headers: {
+          "Content-type": "application/json"
+        }
+      }
+      )
+      if (res.data) {
+        showSuccessToast("Role updated successfully")
+  
+      }
+      else {
+        showErrorToast('Failed to update role');
+      }
+      
+    }
+    return;
+  }
+  const handleCreatePermission = async () => {
+    if (newPermission.trim() !== '') {
+      const response = await axios.post(`${BASE_URL}/permissions/create-permission`,
+        {
+          name: newPermission,
+          description: newPermission
+        })
+      if (response.data) {
+        console.log(response.data);
+        showSuccessToast('Permission created successfully')
+
+      }
+      else {
+        showErrorToast('Failed to create permission');
+      }
+    }
+    return;
+  }
+
+  useEffect(() => {
+    handleFetchPermissions();
+    handleFetchRoles();
+  }, [showSuccessToast])
+
+  const handleAddRole = async () => {
+    console.log(selectedRole);
+    setIsSubmitting(true);
+    handleCreateRole();
+    setFormData({
+      name: "",
+      description: "",
+      permissions: [],
+    });
+    setIsSubmitting(false);
+    setShowDialog(false);
   };
 
-  const handleDeleteRole = (roleId: number) => {
-    setRoles(roles.filter((role) => role.id !== roleId));
-    showNotification("Role deleted successfully");
-  };
-
+  const handleDeleteRole = async (roleId: number) => {
+    const response = await axios.delete(`${BASE_URL}/roles/delete-role/${roleId}`)
+    console.log(response);
+    if (response.status == 204) {
+      setCount((prev) => prev + 1);
+      console.log(response.data)
+      showSuccessToast('Role deleted successfully')
+    }
+  }
   const handleEditRole = (role: Role) => {
     setSelectedRole(role);
     setFormData({
       name: role.name,
       description: role.description,
       permissions: role.permissions,
-      expiryDate: role.expiryDate || null,
     });
     setShowDialog(true);
     setDialogType("edit");
@@ -159,24 +199,14 @@ const UserRoleManagement = () => {
     showNotification("Role duplicated successfully");
   };
 
-  const handleAddPermission = () => {
-    if (newPermission.trim() !== "") {
-      const newId = newPermission.toLowerCase().replace(/\s+/g, "-");
-      const newPerm: Permission = { id: newId, label: newPermission };
 
-      setPermissionsList([...permissionsList, newPerm]);
-      setNewPermission("");
-      showNotification("Permission added successfully", "success");
-    } else {
-      showNotification("Permission cannot be empty", "error");
+  const handleDeletePermission = async (permissionId: string) => {
+    const response = await axios.delete(`${BASE_URL}/permissions/delete-permission/${permissionId}`)
+    if (response.data) {
+      showSuccessToast('Permission deleted successfully')
+      setCount((prev) => prev + 1);
     }
-  };
-  const handleDeletePermission = (permissionId: string) => {
-    setPermissionsList(
-      permissionsList.filter((permission) => permission.id !== permissionId)
-    );
-    showNotification("Permission deleted successfully");
-  };
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -224,23 +254,22 @@ const UserRoleManagement = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {roles.map((role) => (
+                    {roles.map((role: any) => (
                       <tr key={role.id} className="border-b">
                         <td className="p-3">{role.name}</td>
                         <td className="p-3">{role.description}</td>
                         <td className="p-3">
                           <div className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            {role.users.length}
+                            {0}
                           </div>
                         </td>
                         <td className="p-3">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs flex items-center gap-1 w-fit ${
-                              role.isActive
-                                ? "bg-green-100 text-green"
-                                : "bg-red-100 text-white"
-                            }`}
+                            className={`px-2 py-1 rounded-full text-xs flex items-center gap-1 w-fit ${role.isActive
+                              ? "bg-green-100 text-green"
+                              : "bg-red-100 text-white"
+                              }`}
                           >
                             {role.isActive ? (
                               <CheckCircle className="w-3 h-3" />
@@ -290,7 +319,7 @@ const UserRoleManagement = () => {
                     className="w-full p-2 border rounded-md"
                   />
                   <button
-                    onClick={handleAddPermission}
+                    onClick={handleCreatePermission}
                     className="bg-[#1C4A93] text-white px-4 py-2 rounded-md hover:bg-blue w-[200px]"
                   >
                     Add Permission
@@ -298,12 +327,12 @@ const UserRoleManagement = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {permissionsList.map((permission) => (
+                  {permissionsList.map((permission: any) => (
                     <Card key={permission.id}>
                       <CardContent className="p-4">
                         <div className="flex flex-row items-center justify-between mt-1">
                           <CheckCircle className="w-4 h-4" />
-                          <span>{permission.label}</span>
+                          <span>{permission?.name}</span>
                           <button
                             onClick={() =>
                               handleDeletePermission(permission.id)
@@ -322,7 +351,7 @@ const UserRoleManagement = () => {
 
             <TabsContent value="audit">
               <div className="space-y-4">
-                {roles.map((role) => (
+                {roles.map((role: any) => (
                   <div
                     key={role.id}
                     className="flex items-center space-x-4 p-4 border rounded-lg"
@@ -344,9 +373,8 @@ const UserRoleManagement = () => {
 
       {notification && (
         <Alert
-          className={`fixed bottom-4 right-4 ${
-            notification.type === "error" ? "bg-red" : "bg-green"
-          }`}
+          className={`fixed bottom-4 right-4 ${notification.type === "error" ? "bg-red" : "bg-green"
+            }`}
         >
           <AlertDescription>
             <div className="flex items-center gap-2">
@@ -399,7 +427,7 @@ const UserRoleManagement = () => {
                 Permissions
               </label>
               <div className="space-y-2">
-                {permissionsList.map((permission) => (
+                {permissionsList.map((permission: any) => (
                   <label
                     key={permission.id}
                     className="flex items-center space-x-2"
@@ -411,21 +439,21 @@ const UserRoleManagement = () => {
                         const newPermissions = e.target.checked
                           ? [...formData.permissions, permission.id]
                           : formData.permissions.filter(
-                              (p) => p !== permission.id
-                            );
+                            (p: any) => p !== permission.id
+                          );
                         setFormData({
                           ...formData,
                           permissions: newPermissions,
                         });
                       }}
                     />
-                    <span>{permission.label}</span>
+                    <span>{permission.name}</span>
                   </label>
                 ))}
               </div>
             </div>
             <button
-              onClick={dialogType === "add" ? handleAddRole : () => {}}
+              onClick={dialogType === "add" ? handleAddRole : handleUpdateRole}
               disabled={isSubmitting}
               className="w-full bg-[#1C4A93] text-white px-4 py-2 rounded-md hover:bg-blue disabled:opacity-50 flex items-center justify-center gap-2"
             >

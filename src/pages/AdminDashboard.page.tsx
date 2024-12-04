@@ -5,9 +5,32 @@ import { BarChart, LineChart, PieChart } from "@mui/x-charts"
 import { Link } from "react-router-dom";
 import CategoryOrder from "../components/dashboard/Table/CategoryOrder";
 import BestSales from "../components/dashboard/Table/BestSales";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { AnyComponent } from "styled-components/dist/types";
 
 
 const AdminDashboard = () => {
+    const BASE_URL= import.meta.env.VITE_BASE_URL;
+    const [totalUsers, setTotalUsers]=useState(0);
+    const [totalShops, setTotalShops]=useState(0);
+    const fetchAllUsers= async ()=>{
+        const response= await axios.get(`${BASE_URL}/user/all-users`)
+        const users=response.data.data.users as Array<any>;
+        console.log(users);
+        setTotalUsers(users.length);
+    }
+    const fetchAllShops= async ()=>{
+        const response= await axios.get(`${BASE_URL}/shops`)
+        const shops= response.data.data.shops as Array<any>;
+        console.log(shops);
+        setTotalShops(shops.length);
+        
+    }
+    useEffect(()=>{
+        fetchAllUsers();
+        fetchAllShops();
+    },[])
     function getGreeting(): string {
         const now = new Date();
         const hour = now.getHours();
@@ -49,14 +72,14 @@ const AdminDashboard = () => {
                 </div>
                 <p className="font-bold text-lg mb-7">Sales Summary</p>
                 <div className="grid md:grid-cols-4 gap-6">
-                    <TotalSalesCard icon={<AttachMoneyRounded />} title={"Total Sales"} totalSales={"10000 UGX"} percentageChange={5} />
-                    <TotalSalesCard icon={<LocalConvenienceStoreRounded />} title={"Total Shops"} totalSales={500} percentageChange={1} />
-                    <TotalSalesCard icon={<PersonAddAlt1Rounded />} title={"Total Users"} totalSales={100} percentageChange={-2} />
-                    <TotalSalesCard icon={<AddTaskRounded />} title={"Pending Approvals"} totalSales={50} percentageChange={1} />
-                    <TotalSalesCard icon={<PendingRounded />} title={"Pending orders"} totalSales={100} percentageChange={20} />
-                    <TotalSalesCard icon={<AssignmentReturnRounded />} title={"Total Returns"} totalSales={2} percentageChange={-10} />
-                    <TotalSalesCard icon={<LocalAtmRounded />} title={"Total Profit"} totalSales={50} percentageChange={10} />
-                    <TotalSalesCard icon={<MonetizationOnRounded />} title={"Total Net Income"} totalSales={"200000 UGX"} percentageChange={25} />
+                    <TotalSalesCard icon={<AttachMoneyRounded />} title={"Total Sales"} totalSales={0} percentageChange={5} />
+                    <TotalSalesCard icon={<LocalConvenienceStoreRounded />} title={"Total Shops"} totalSales={totalShops} percentageChange={1} />
+                    <TotalSalesCard icon={<PersonAddAlt1Rounded />} title={"Total Users"} totalSales={totalUsers} percentageChange={-2} />
+                    <TotalSalesCard icon={<AddTaskRounded />} title={"Pending Approvals"} totalSales={0} percentageChange={1} />
+                    <TotalSalesCard icon={<PendingRounded />} title={"Pending orders"} totalSales={0} percentageChange={20} />
+                    <TotalSalesCard icon={<AssignmentReturnRounded />} title={"Total Returns"} totalSales={0} percentageChange={-10} />
+                    <TotalSalesCard icon={<LocalAtmRounded />} title={"Total Profit"} totalSales={0} percentageChange={10} />
+                    <TotalSalesCard icon={<MonetizationOnRounded />} title={"Total Net Income"} totalSales={0} percentageChange={25} />
                 </div>
                 <div id="charts" className="py-10 grid md:grid-cols-3 gap-5">
                     <div className=" bg-white shadow-md p-5 rounded-xl">

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { FaPen, FaTrash } from 'react-icons/fa';
 import { IoIosSearch } from "react-icons/io";
 
@@ -10,22 +11,24 @@ interface User {
   type: string;
   status: string;
 }
-
-const userData: User[] = [
-  { name: 'Doris Greene', email: 'ms.greene@outlook.com', role: 'Buyer', type: 'Customer', status: 'Active' },
-  { name: 'Jessie Williams', email: 'jessie@gmail.com', role: 'Administrator', type: 'Admin', status: 'Active' },
-  { name: 'Jose Rodriguez', email: 'jose.rodz@gmail.com', role: 'Artist', type: 'Seller', status: 'Active' },
-  { name: 'Mason Porter', email: 'mason_porter@gmail.com', role: 'Seller', type: 'Seller', status: 'Active' },
-  { name: 'Minerva Hooper', email: 'minerva.hooper@gmail.com', role: 'Administrator', type: 'Admin', status: 'Disabled' },
-  { name: 'Peter Benhams', email: 'pette@gmail.com', role: 'Buyer', type: 'Customer', status: 'Active' },
-  { name: 'Philip Chaney', email: 'philip.chaney@gmail.com', role: 'Manager', type: 'Admin', status: 'Active' },
-];
+const BASE_URL= import.meta.env.VITE_BASE_URL;
 
 const UserManage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [users, setUsers] = useState<User[]>(userData);
+  const [users, setUsers] = useState<any>([]);
+
+  
+  const fetchAllUsers= async ()=>{
+    const response= await axios.get(`${BASE_URL}/user/all-users`)
+    const users=response.data.data.users;
+    console.log(users);
+    setUsers(users);
+}
+useEffect(()=>{
+ fetchAllUsers();
+}, [])
   const usersPerPage = 5;
-  const totalPages = Math.ceil(userData.length / usersPerPage);
+  const totalPages = Math.ceil(users?.length / usersPerPage);
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,8 +38,8 @@ const UserManage: React.FC = () => {
   const handlePageChange = (pageNumber: number) => setCurrentPage(pageNumber);
 
   const toggleUserStatus = (email: string) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
+    setUsers((prevUsers:any) =>
+      prevUsers.map((user:any) =>
         user.email === email
           ? {
               ...user,
@@ -48,15 +51,14 @@ const UserManage: React.FC = () => {
   };
 
   const totalUsers = users.length;
-  const activeUsers = users.filter(user => user.status === 'Active').length;
-  const disabledUsers = users.filter(user => user.status === 'Disabled').length;
-  const adminUsers = users.filter(user => user.role === 'Administrator').length;
+  const activeUsers = users.filter((user:any) => user.status === 'Active').length;
+  const disabledUsers = users.filter((user:any) => user.status === 'Inactive').length;
+  const adminUsers = users.filter((user:any) => user.role === 'admin').length;
 
-  const filteredUsers = users.filter((user) => {
+  const filteredUsers = users.filter((user:any) => {
     return (
-      (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.status.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())) &&
       (statusFilter === "All" || user.status === statusFilter) &&
       (roleFilter === "All" || user.role === roleFilter)
     );
@@ -140,12 +142,12 @@ const UserManage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {currentFilteredUsers.map((user, index) => (
+            {currentFilteredUsers.map((user:any, index:any) => (
               <tr key={index}>
-                <td className="px-4 py-2 border-b">{user.name}</td>
+                <td className="px-4 py-2 border-b">{user.firstName+' '+user.lastName}</td>
                 <td className="px-4 py-2 border-b">{user.email}</td>
                 <td className="px-4 py-2 border-b">{user.role}</td>
-                <td className="px-4 py-2 border-b">{user.type}</td>
+                {/* <td className="px-4 py-2 border-b">{user.type}</td> */}
                 <td className="px-4 py-2 border-b">
                   <span
                     className={`inline-block w-24 text-center py-2 rounded-full ${
