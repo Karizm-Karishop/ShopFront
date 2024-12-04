@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { showSuccessToast, showErrorToast } from '../../utilis/ToastProps';
 import { RootState } from '../store';
-
 interface ProductState {
   name: string;
   product_image: string | null;
@@ -21,6 +21,7 @@ interface ProductState {
   totalAlbums: number; 
   products?: any[];
   totalProducts: number;
+  selectedProduct?: any;
 }
 
 const initialState: ProductState = {
@@ -68,6 +69,7 @@ export const createProduct = createAsyncThunk(
   }
 );
 
+
 export const fetchAllProductswithArtist = createAsyncThunk(
   'product/fetchAllproducts',
   async (artist_id: number, { rejectWithValue }) => {
@@ -86,9 +88,65 @@ export const fetchAllProductswithArtist = createAsyncThunk(
       console.log("Product Data",response.data)
       return response.data;
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to fetch Products';
-      showErrorToast(errorMessage);
+      const errorMessage = 'No Product Found For this Artist';      
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const updateProduct = createAsyncThunk(
+  'product/updateProduct',
+  async (
+    { productId, productData }: { productId: number; productData: Partial<ProductState> }, 
+    { rejectWithValue }
+  ) => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      return rejectWithValue('No token found');
+    }
+
+    try {
+      const response = await axios.put(`${apiUrl}/${productId}`, productData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       
+      showSuccessToast('Product updated successfully');
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to update product';
+      showErrorToast(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Delete Product Thunk
+export const deleteProduct = createAsyncThunk(
+  'product/deleteProduct',
+  async (productId: number, { rejectWithValue }) => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      return rejectWithValue('No token found');
+    }
+
+    try {
+      const response = await axios.delete(`${apiUrl}/${productId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Deleted Data",response)
+      
+      showSuccessToast('Product deleted successfully');
+      return productId;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to delete product';
+      showErrorToast(errorMessage);
       return rejectWithValue(errorMessage);
     }
   }
@@ -129,6 +187,9 @@ const addProductSlice = createSlice({
     setAvailability: (state, action: PayloadAction<boolean>) => {
       state.isAvailable = action.payload;
     },
+    setSelectedProduct: (state, action: PayloadAction<any>) => {
+      state.selectedProduct = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -159,8 +220,52 @@ const addProductSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      .addCase(updateProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        // Optionally update the product in the list
+        if (state.products) {
+          const index = state.products.findIndex(
+            (product) => product.product_id === action.payload.data.product_id
+          );
+          if (index !== -1) {
+            state.products[index] = action.payload.data;
+          }
+        }
+        state.selectedProduct = null;
+      })
+      .addCase(updateProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Delete Product Reducers
+      .addCase(deleteProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteProduct.fulfilled, (state, action) => {
+        state.loading = false;
+        // Remove the deleted product from the list
+        if (state.products) {
+          state.products = state.products.filter(
+            (product) => product.product_id !== action.payload
+          );
+          state.totalProducts = state.products.length;
+        }
+        state.selectedProduct = null;
+      })
+      .addCase(deleteProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
   },
 });
+
+
 
 export const {
   setName,
@@ -173,6 +278,7 @@ export const {
   setSalesPrice,
   setTags,
   setAvailability,
+  setSelectedProduct
 } = addProductSlice.actions;
 
 export default addProductSlice.reducer;

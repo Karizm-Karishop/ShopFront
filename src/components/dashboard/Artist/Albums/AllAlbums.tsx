@@ -1,6 +1,8 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 // @ts-nocheck
+
 import { useState, useEffect } from "react";
 import BeatLoader from "react-spinners/BeatLoader";
 
@@ -156,6 +158,15 @@ const AllAlbums = () => {
       </div>
     );
   }
+
+  if (albums.length === 0) {
+    return (
+        <div className="container mx-auto p-6">
+            <h1 className="text-2xl font-bold mb-4">All Albums</h1>
+            <p className="text-gray-500">No Album found. Create your first Album!</p>
+        </div>
+    );
+}
 
   return (
     <div className="p-6 space-y-6">

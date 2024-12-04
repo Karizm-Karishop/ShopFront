@@ -3,13 +3,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-
 import { showErrorToast, showSuccessToast } from '../../utilis/ToastProps';
 import { LoginResponse, LoginCredentials, User } from '../../types/auth.types';
 import { NavigateFunction } from 'react-router-dom';
 
 interface LoginState {
-  user_id: any;
+  user_id: number;
   token: string | null;
   user: User | null;
   loading: boolean;

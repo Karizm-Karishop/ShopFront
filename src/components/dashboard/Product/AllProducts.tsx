@@ -3,12 +3,16 @@ import { MdModeEdit, MdDelete } from "react-icons/md";
 import { useAppDispatch, useAppSelector } from "../../../Redux/hooks";
 import { RootState } from "../../../Redux/store";
 import BeatLoader from "react-spinners/BeatLoader";
+import ConfirmationCard from "../../ConfirmationPage/ConfirmationCard";
+
 import {
   Search
 } from "lucide-react";
 import {
+  deleteProduct,
   fetchAllProductswithArtist,
 } from "../../../Redux/Slices/addProductSlice";
+import EditProductModal from "./EditProductModel";
 
 interface Product {
   product_id: number;
@@ -30,7 +34,11 @@ const AllProducts: React.FC = () => {
 
   const user = useAppSelector((state: RootState) => state.loginIn.user);
   const { products, loading, error } = useAppSelector((state: RootState) => state.product);
-  
+  const [isConfirmationModalVisible, setModalVisible] = useState(false);
+  const [currentProductId, setCurrentProductId] = useState<number | null>(null);
+    // State for Edit Modal
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   
@@ -105,6 +113,38 @@ const AllProducts: React.FC = () => {
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+
+
+
+  const handleDeleteClick = (id: number) => {
+    setCurrentProductId(id);
+    setModalVisible(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (currentProductId !== null) {
+      dispatch(deleteProduct(currentProductId));
+    }
+    setModalVisible(false);
+    setCurrentProductId(null);
+  };
+
+  const handleDeleteCancel = () => {
+    setModalVisible(false);
+    setCurrentProductId(null);
+  };
+
+  const handleEditClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsEditModalOpen(true);
+  };
+
+  // Close Edit Modal
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedProduct(null);
+  };
+
 
   if (loading) {
     return (
@@ -227,12 +267,14 @@ const AllProducts: React.FC = () => {
                   <td className="px-4 py-2">
                     <div className="flex items-center space-x-2">
                       <button 
+                      onClick={() => handleEditClick(product)}
                         className="text-[#1C4A93] hover:text-[#1C4A93] text-lg cursor-pointer"
                         title="Edit Product"
                       >
                         <MdModeEdit />
                       </button>
                       <button 
+                       onClick={() => handleDeleteClick(product.product_id)}
                         className="text-red hover:text-red text-lg cursor-pointer"
                         title="Delete Product"
                       >
@@ -252,6 +294,7 @@ const AllProducts: React.FC = () => {
           </tbody>
         </table>
       </div>
+
 
       <div className="flex justify-between items-center mt-6">
         <div className="text-gray-600">
@@ -273,6 +316,20 @@ const AllProducts: React.FC = () => {
           ))}
         </div>
       </div>
+      <ConfirmationCard
+        isVisible={isConfirmationModalVisible}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        message="Are you sure you want to delete this Product?"
+      />
+            {/* Edit Product Modal */}
+            {isEditModalOpen && selectedProduct && (
+        <EditProductModal 
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          product={selectedProduct}
+        />
+      )}
     </section>
   );
 };

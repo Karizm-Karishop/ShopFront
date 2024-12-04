@@ -33,13 +33,17 @@ interface TrackState {
   loading: boolean;
   error: string | null;
   currentAlbumId: number | null;
+  selectedTrack?: any;
+  totalTracks: number;
+
 }
 
 const initialState: TrackState = {
   tracks: [],
   loading: false,
   error: null,
-  currentAlbumId: null
+  currentAlbumId: null,
+  totalTracks: 0
 };
 
 const apiUrl = `${import.meta.env.VITE_BASE_URL}/tracks/upload`;
@@ -138,6 +142,34 @@ export const updateTrack = createAsyncThunk(
   }
 );
 
+export const deleteTrack = createAsyncThunk(
+  'Track/deleteTrack',
+  async (trackId: number, { rejectWithValue }) => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      return rejectWithValue('No token found');
+    }
+
+    try {
+      const response = await axios.delete(`${apiUrl}/${trackId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Deleted Data",response)
+      
+      showSuccessToast('Track deleted successfully');
+      return trackId;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to delete Track';
+      showErrorToast(errorMessage);
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 export const fetchArtistTracks = createAsyncThunk(
   'tracks/fetchArtistTracks',
   async (artist_id: number, { rejectWithValue }) => {
@@ -181,6 +213,9 @@ const trackSlice = createSlice({
     
     setCurrentAlbumId: (state, action: PayloadAction<number>) => {
       state.currentAlbumId = action.payload;
+    },
+    setSelectedTrack: (state, action: PayloadAction<any>) => {
+      state.selectedTrack = action.payload;
     },
     
     resetTrackState: () => initialState
@@ -229,6 +264,25 @@ const trackSlice = createSlice({
   state.tracks = action.payload.data || [];
 })
 .addCase(fetchArtistTracks.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload as string;
+})
+
+.addCase(deleteTrack.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(deleteTrack.fulfilled, (state, action) => {
+  state.loading = false;
+  if (state.tracks) {
+    state.tracks = state.tracks.filter(
+      (track) => track.track_id !== action.payload
+    );
+    state.totalTracks = state.tracks.length;
+  }
+  state.selectedTrack = null;
+})
+.addCase(deleteTrack.rejected, (state, action) => {
   state.loading = false;
   state.error = action.payload as string;
 })
