@@ -10,6 +10,8 @@ import TrackReducer from './Slices/TrackSlices'
 import ProductReducer from './Slices/addProductSlice'
 import categorySlice from "./Slices/CategorySlice";
 import categoryReducer from "./Slices/CategorySlices";
+import bookReducer from './Slices/Bookslices'
+import profile from './Slices/ProfileSlices'
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +26,8 @@ export const store = configureStore({
     product: ProductReducer,
     categories:categorySlice,
     category:categoryReducer,
+    book:bookReducer,
+    profile: profile
 
   },
 });

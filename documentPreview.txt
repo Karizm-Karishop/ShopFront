@@ -1,0 +1,225 @@
+import React, { useState, useEffect } from 'react';
+
+// Custom SVG Icons
+const FileTextIcon = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" x2="8" y1="13" y2="13" />
+    <line x1="16" x2="8" y1="17" y2="17" />
+    <line x1="10" x2="8" y1="9" y2="9" />
+  </svg>
+);
+
+const FileIcon = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+  </svg>
+);
+
+const ImageIcon = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <polyline points="21 15 16 10 5 21" />
+  </svg>
+);
+
+const PdfIcon = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+    <polyline points="14 2 14 8 20 8" />
+    <path d="M10 9.3a2.8 2.8 0 0 0-3 3 2.8 2.8 0 0 0 3 3" />
+    <path d="M14 9.3a2.8 2.8 0 0 1 3 3 2.8 2.8 0 0 1-3 3" />
+    <path d="M10 9.3 14 15" />
+  </svg>
+);
+
+const SpreadsheetIcon = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <line x1="3" x2="21" y1="9" y2="9" />
+    <line x1="3" x2="21" y1="15" y2="15" />
+    <line x1="9" x2="9" y1="3" y2="21" />
+    <line x1="15" x2="15" y1="3" y2="21" />
+  </svg>
+);
+
+// Helper function to determine file type
+const getFileType = (file) => {
+  // If no file is provided, return a default type
+  if (!file || !file.name) {
+    return 'application/octet-stream';
+  }
+
+  const extension = file.name.split('.').pop().toLowerCase();
+  const fileTypeMap = {
+    pdf: 'application/pdf',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    txt: 'text/plain',
+    csv: 'text/csv',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    bmp: 'image/bmp'
+  };
+  return fileTypeMap[extension] || 'application/octet-stream';
+};
+
+// Icons mapping for different file types
+const FileTypeIcons = {
+  'application/pdf': PdfIcon,
+  'application/msword': FileTextIcon,
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': FileTextIcon,
+  'text/plain': FileIcon,
+  'text/csv': SpreadsheetIcon,
+  'application/vnd.ms-excel': SpreadsheetIcon,
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': SpreadsheetIcon,
+  'image/jpeg': ImageIcon,
+  'image/png': ImageIcon,
+  'image/gif': ImageIcon,
+  'image/bmp': ImageIcon,
+  'application/octet-stream': FileIcon
+};
+
+const DocumentPreview = ({ file }) => {
+  const [preview, setPreview] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+
+    const fileType = getFileType(file);
+    
+    // Reset previous states
+    setPreview(null);
+    setError(null);
+
+    // Handle image preview
+    if (fileType.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+      };
+      reader.onerror = () => {
+        setError('Error reading image file');
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // Handle text file preview
+    if (fileType === 'text/plain' || fileType === 'text/csv') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreview(e.target.result);
+      };
+      reader.onerror = () => {
+        setError('Error reading text file');
+      };
+      reader.readAsText(file);
+      return;
+    }
+
+    // For other file types, just show file details
+    setPreview({
+      name: file.name,
+      size: `${(file.size / 1024).toFixed(2)} KB`,
+      type: fileType
+    });
+  }, [file]);
+
+  // Determine the icon based on file type
+  const FileTypeIcon = FileTypeIcons[getFileType(file)] || FileIcon;
+
+  if (!file) {
+    return (
+      <div className="p-4 text-center text-gray-500">
+        No file selected
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 border rounded-lg shadow-sm">
+      <div className="flex items-center mb-4">
+        <FileTypeIcon className="w-12 h-12 mr-4 text-gray-600" />
+        <div>
+          <p className="font-semibold">{file.name}</p>
+          <p className="text-sm text-gray-500">{`${(file.size / 1024).toFixed(2)} KB`}</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-2 rounded">
+          {error}
+        </div>
+      )}
+
+      {preview && (
+        <div className="mt-4">
+          {typeof preview === 'string' && (
+            preview.startsWith('data:image/') ? (
+              <img 
+                src={preview} 
+                alt="File preview" 
+                className="max-w-full max-h-96 object-contain rounded"
+              />
+            ) : (
+              <pre className="bg-gray-50 p-2 rounded overflow-x-auto text-sm">
+                {preview}
+              </pre>
+            )
+          )}
+          
+          {typeof preview === 'object' && (
+            <div className="bg-gray-50 p-2 rounded">
+              <p>File Details:</p>
+              <ul>
+                <li>Name: {preview.name}</li>
+                <li>Size: {preview.size}</li>
+                <li>Type: {preview.type}</li>
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FileUploadPreview = () => {
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    setSelectedFile(file);
+  };
+
+  return (
+    <div className="max-w-md mx-auto p-4">
+      <input 
+        type="file" 
+        onChange={handleFileChange} 
+        className="mb-4 block w-full text-sm text-gray-500
+          file:mr-4 file:py-2 file:px-4
+          file:rounded-full file:border-0
+          file:text-sm file:font-semibold
+          file:bg-violet-50 file:text-violet-700
+          hover:file:bg-violet-100"
+      />
+      
+      <DocumentPreview file={selectedFile} />
+    </div>
+  );
+};
+
+export default FileUploadPreview;

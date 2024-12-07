@@ -1,17 +1,43 @@
-import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "../../../../Redux/store";
-import { createBook } from "../../../../Redux/Slices/Bookslices";
+import { updateBook } from "../../../../Redux/Slices/Bookslices";
 import { uploadUrlToCloudinary } from "../../../../utilis/cloud";
 import BeatLoader from "react-spinners/BeatLoader";
 import { useAppSelector } from '../../../../Redux/hooks';
 
-const PostBook: React.FC = () => {
+interface Book {
+  id: number;
+  bookName: string;
+  bookTitle: string;
+  authorFirstName: string;
+  authorLastName: string;
+  coverImage: string;
+  uploadFile: string;
+  price: number;
+  yearOfPublish: number;
+  publishedDate: string;
+  pageNumber: number;
+  description: string;
+}
+
+interface EditBookModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  bookEdit: Book | null;
+}
+
+const EditBookModel: React.FC<EditBookModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  bookEdit 
+}) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useSelector((state: RootState) => state.book);
+  const { loading, error } = useAppSelector((state: RootState) => state.book);
   const user = useAppSelector((state: RootState) => state.loginIn.user);
- 
+
   const [bookData, setBookData] = useState({
+    id: 0,
     bookName: "",
     bookTitle: "",
     authorFirstName: "",
@@ -25,6 +51,28 @@ const PostBook: React.FC = () => {
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string>("");
+  const [documentPreview, setDocumentPreview] = useState<string>("");
+
+  // Populate form when book is selected for editing
+  useEffect(() => {
+    if (bookEdit) {
+      setBookData({
+        id: bookEdit.id,
+        bookName: bookEdit.bookName,
+        bookTitle: bookEdit.bookTitle,
+        authorFirstName: bookEdit.authorFirstName,
+        authorLastName: bookEdit.authorLastName,
+        publishedDate: bookEdit.publishedDate,
+        price: bookEdit.price.toString(),
+        yearOfPublish: bookEdit.yearOfPublish.toString(),
+        pageNumber: bookEdit.pageNumber.toString(),
+        description: bookEdit.description,
+      });
+      setCoverImagePreview(bookEdit.coverImage || "");
+      setDocumentPreview(bookEdit.uploadFile || "");
+    }
+  }, [bookEdit]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -41,8 +89,10 @@ const PostBook: React.FC = () => {
       const file = e.target.files[0];
       if (type === 'cover') {
         setCoverImage(file);
+        setCoverImagePreview(URL.createObjectURL(file));
       } else {
         setUploadFile(file);
+        setDocumentPreview(URL.createObjectURL(file));
       }
     }
   };
@@ -55,58 +105,52 @@ const PostBook: React.FC = () => {
     }
 
     try {
-      let coverImageUrl = "";
+      let coverImageUrl = coverImagePreview;
       if (coverImage) {
         coverImageUrl = await uploadUrlToCloudinary(coverImage);
       }
 
-      let documentUrl = "";
+      let documentUrl = documentPreview;
       if (uploadFile) {
         documentUrl = await uploadUrlToCloudinary(uploadFile);
       }
 
       const submissionData = {
-        ...bookData,
+        id: bookData.id,
+        bookName: bookData.bookName,
+        bookTitle: bookData.bookTitle,
+        authorFirstName: bookData.authorFirstName,
+        authorLastName: bookData.authorLastName,
+        publishedDate: bookData.publishedDate,
         coverImage: coverImageUrl,
         uploadFile: documentUrl,
         price: parseFloat(bookData.price),
         yearOfPublish: parseInt(bookData.yearOfPublish),
         pageNumber: parseInt(bookData.pageNumber),
-        artist_id: user.user_id, 
+        description: bookData.description,
+        artist_id: user.user_id,
       };
 
-      await dispatch(createBook(submissionData));
-
-      resetForm();
+      await dispatch(updateBook(submissionData));
+      onClose();
     } catch (uploadError) {
-      console.error("Error uploading files or creating book:", uploadError);
+      console.error("Error uploading files or updating book:", uploadError);
     }
   };
 
-  const resetForm = () => {
-    setBookData({
-      bookName: "",
-      bookTitle: "",
-      authorFirstName: "",
-      authorLastName: "",
-      publishedDate: "",
-      price: "",
-      yearOfPublish: "",
-      pageNumber: "",
-      description: "",
-    });
-    setCoverImage(null);
-    setUploadFile(null);
-  };
+  if (!isOpen) return null;
 
   return (
-    <div className="min-h-auto bg-gray-100 flex justify-center items-center mt-10">
-      <form 
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-lg max-w-4xl w-full"
-      >
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+      <div className="bg-white p-8 rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold">Post a Book</h2>
+          <h2 className="text-xl font-bold">Edit Book</h2>
+          <button 
+            onClick={onClose} 
+            className="text-gray-600 hover:text-gray-900"
+          >
+            ✕
+          </button>
         </div>
 
         {error && (
@@ -115,10 +159,11 @@ const PostBook: React.FC = () => {
           </div>
         )}
 
-        <div className="">
-          <div className="flex flex-col justify-between gap-10 md:flex-row lg:flex-row">
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Book Name</label>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Book Name */}
+            <div>
+              <label className="block mb-2">Book Name</label>
               <input
                 type="text"
                 name="bookName"
@@ -129,8 +174,9 @@ const PostBook: React.FC = () => {
               />
             </div>
 
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Book Title</label>
+            {/* Book Title */}
+            <div>
+              <label className="block mb-2">Book Title</label>
               <input
                 type="text"
                 name="bookTitle"
@@ -140,11 +186,10 @@ const PostBook: React.FC = () => {
                 required
               />
             </div>
-          </div>
 
-          <div className="flex flex-col justify-between gap-10 md:flex-row lg:flex-row">
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Author First Name</label>
+            {/* Author First Name */}
+            <div>
+              <label className="block mb-2">Author First Name</label>
               <input
                 type="text"
                 name="authorFirstName"
@@ -155,8 +200,9 @@ const PostBook: React.FC = () => {
               />
             </div>
 
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Author Last Name</label>
+            {/* Author Last Name */}
+            <div>
+              <label className="block mb-2">Author Last Name</label>
               <input
                 type="text"
                 name="authorLastName"
@@ -166,43 +212,49 @@ const PostBook: React.FC = () => {
                 required
               />
             </div>
-          </div>
 
-          <div className="flex flex-col justify-between gap-10 md:flex-row lg:flex-row">
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Upload Cover Image</label>
+            {/* Cover Image */}
+            <div>
+              <label className="block mb-2">Cover Image</label>
               <input
                 type="file"
                 accept=".png,.jpg,.jpeg"
                 onChange={(e) => handleFileChange(e, 'cover')}
                 className="w-full px-4 py-2 border rounded-lg"
               />
-              {coverImage && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selected file: {coverImage.name}
-                </p>
+              {coverImagePreview && (
+                <img 
+                  src={coverImagePreview} 
+                  alt="Cover Preview" 
+                  className="mt-2 h-20 w-20 object-cover rounded"
+                />
               )}
             </div>
 
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Upload Document</label>
+            {/* Document Upload */}
+            <div>
+              <label className="block mb-2">Upload Document</label>
               <input
                 type="file"
                 accept=".pdf,.doc,.docx"
                 onChange={(e) => handleFileChange(e, 'document')}
                 className="w-full px-4 py-2 border rounded-lg"
               />
-              {uploadFile && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Selected file: {uploadFile.name}
-                </p>
+              {documentPreview && (
+                <a 
+                  href={documentPreview} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="mt-2 text-blue-500 hover:underline block"
+                >
+                  View Current Document
+                </a>
               )}
             </div>
-          </div>
 
-          <div className="flex flex-col justify-between gap-10 md:flex-row lg:flex-row">
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Published Date</label>
+            {/* Published Date */}
+            <div>
+              <label className="block mb-2">Published Date</label>
               <input
                 type="date"
                 name="publishedDate"
@@ -212,8 +264,10 @@ const PostBook: React.FC = () => {
                 required
               />
             </div>
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Price</label>
+
+            {/* Price */}
+            <div>
+              <label className="block mb-2">Price</label>
               <input
                 type="number"
                 name="price"
@@ -224,11 +278,10 @@ const PostBook: React.FC = () => {
                 step="0.01"
               />
             </div>
-          </div>
 
-          <div className="flex flex-col justify-between gap-10 md:flex-row lg:flex-row">
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Year of Publish</label>
+            {/* Year of Publish */}
+            <div>
+              <label className="block mb-2">Year of Publish</label>
               <input
                 type="number"
                 name="yearOfPublish"
@@ -239,8 +292,9 @@ const PostBook: React.FC = () => {
               />
             </div>
 
-            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Page Number</label>
+            {/* Page Number */}
+            <div>
+              <label className="block mb-2">Page Number</label>
               <input
                 type="number"
                 name="pageNumber"
@@ -250,10 +304,10 @@ const PostBook: React.FC = () => {
                 required
               />
             </div>
-          </div>
-          <div>
-            <div className="w-[100%] lg:w-[100%] md:w-[100%]">
-              <label className="block mb-1">Description</label>
+
+            {/* Description */}
+            <div className="col-span-1 md:col-span-2">
+              <label className="block mb-2">Description</label>
               <textarea
                 name="description"
                 value={bookData.description}
@@ -264,7 +318,9 @@ const PostBook: React.FC = () => {
               ></textarea>
             </div>
           </div>
-          <div className="flex flex-col w-full items-center justify-center my-5">
+
+          {/* Submit Button */}
+          <div className="flex justify-center mt-6">
             <button
               type="submit"
               disabled={loading}
@@ -273,15 +329,14 @@ const PostBook: React.FC = () => {
               {loading ? (
                 <BeatLoader color="white" size={10} />
               ) : (
-                "Save"
+                "Save Changes"
               )}
             </button>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default PostBook;
-
+export default EditBookModel;

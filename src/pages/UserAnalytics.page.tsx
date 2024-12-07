@@ -1,7 +1,7 @@
 import { AssignmentReturnRounded, PendingRounded, AddTaskRounded, PersonAddAlt1Rounded } from "@mui/icons-material"
 import TotalSalesCard from "../components/dashboard/Admin/CardSales"
 import Export from "../assets/ExportIcon.svg"
-import { BarChart, LineChart, PieChart } from "@mui/x-charts"
+import { BarChart, LineChart } from "@mui/x-charts"
 const UserAnalytics = () => {
     return (
         <div className="bg-dashgrey min-h-screen">

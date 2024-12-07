@@ -3,7 +3,7 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { showSuccessToast, showErrorToast } from '../../utilis/ToastProps';
-import { RootState } from '../store';
+import { RootState, store } from '../store';
 interface ProductState {
   name: string;
   product_image: string | null;
@@ -72,13 +72,14 @@ export const createProduct = createAsyncThunk(
 
 export const fetchAllProductswithArtist = createAsyncThunk(
   'product/fetchAllproducts',
-  async (artist_id: number, { rejectWithValue }) => {
+  async (  rejectWithValue:any ) => {
     const token = localStorage.getItem('token');
 
     if (!token) {
       return rejectWithValue('No token found');
     }
-
+    const user = store.getState().loginIn.user;
+    const artist_id = user?.user_id
     try {
       const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/products/artist/${artist_id}`, {
         headers: {

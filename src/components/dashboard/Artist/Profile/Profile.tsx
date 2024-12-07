@@ -1,9 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { updateProfile, fetchProfile } from "../../../../Redux/Slices/ProfileSlices"; // Adjust import path as needed
+import { RootState,store } from "../../../../Redux/store"; // Adjust import path as needed
 
 interface FormData {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone: string;
+  phone_number: string;
   address: string;
   gender: string;
   socialLinks: {
@@ -14,14 +18,20 @@ interface FormData {
   };
   biography: string;
   genres: string[];
-  profilePic: File | null;
+  profile_picture: File | string | null;
 }
 
 const Profile: React.FC = () => {
+  const dispatch = useDispatch();
+  const user = store.getState().loginIn.user;
+  const profileData = useSelector((state: RootState) => state.profile.data);
+  const loading = useSelector((state: RootState) => state.profile.loading);
+
   const [formData, setFormData] = useState<FormData>({
-    name: "",
-    email: "",
-    phone: "",
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
+    phone_number: "",
     address: "",
     gender: "",
     socialLinks: {
@@ -32,10 +42,27 @@ const Profile: React.FC = () => {
     },
     biography: "",
     genres: [],
-    profilePic: null,
+    profile_picture: null,
   });
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null); // Using useRef
+  useEffect(() => {
+    // Fetch existing profile data when component mounts
+    dispatch(fetchProfile());
+  }, [dispatch]);
+
+  // Update form data when profile data is fetched
+  useEffect(() => {
+    if (profileData) {
+      setFormData(prevData => ({
+        ...prevData,
+        ...profileData,
+        socialLinks: profileData.socialLinks || prevData.socialLinks,
+        profile_picture: profileData.profile_picture || null
+      }));
+    }
+  }, [profileData]);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -46,14 +73,22 @@ const Profile: React.FC = () => {
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    if (name === "genres") {
+      // Handle multi-select for genres
+      const selectedGenres = Array.from(e.target.selectedOptions, 
+        (option) => option.value
+      );
+      setFormData((prevData) => ({ ...prevData, [name]: selectedGenres }));
+    } else {
+      setFormData((prevData) => ({ ...prevData, [name]: value }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFormData((prevData) => ({
         ...prevData,
-        profilePic: e.target.files![0],
+        profile_picture: e.target.files![0],
       }));
     }
   };
@@ -68,7 +103,17 @@ const Profile: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData);
+    
+    // Prepare payload for update
+    const payload = {
+      ...formData,
+      firstName: formData.firstName || undefined,
+      lastName: formData.lastName || undefined,
+      email: formData.email || undefined,
+    };
+
+    // Dispatch update profile action
+    dispatch(updateProfile(payload));
   };
 
   return (
@@ -81,9 +126,11 @@ const Profile: React.FC = () => {
           <h2 className="text-xl font-bold">Edit Artist Profile</h2>
           <button
             type="submit"
-            className="bg-[#1C4A93] text-white px-10 py-2 rounded-lg hover:bg-[#1C4A93]"
+            disabled={loading}
+            className={`bg-[#1C4A93] text-white px-10 py-2 rounded-lg 
+              ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#1C4A93]'}`}
           >
-            Save
+            {loading ? 'Saving...' : 'Save'}
           </button>
         </div>
 
@@ -97,18 +144,22 @@ const Profile: React.FC = () => {
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
-                ref={fileInputRef} // Using useRef for the file input
+                ref={fileInputRef}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
 
-              {formData.profilePic ? (
+              {formData.profile_picture ? (
                 <img
-                  src={URL.createObjectURL(formData.profilePic)}
+                  src={
+                    formData.profile_picture instanceof File 
+                      ? URL.createObjectURL(formData.profile_picture)
+                      : formData.profile_picture as string
+                  }
                   alt="Profile"
-                  className="w-25 h-25 rounded-full object-cover"
+                  className="w-20 h-20 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center">
+                <div className="w-24 h-24 rounded-full bg-gray-00 flex items-center justify-center">
                   <span className="text-gray-500">No Image</span>
                 </div>
               )}
@@ -116,7 +167,7 @@ const Profile: React.FC = () => {
               {/* Plus icon for image upload */}
               <div
                 className="absolute bottom-0 right-0 bg-[#1C4A93] w-8 h-8 rounded-full flex items-center justify-center cursor-pointer"
-                onClick={() => fileInputRef.current?.click()} // Trigger file input click using ref
+                onClick={() => fileInputRef.current?.click()}
               >
                 <span className="text-white text-xl font-bold">+</span>
               </div>
@@ -125,16 +176,29 @@ const Profile: React.FC = () => {
 
           <div className="flex flex-col justify-between gap-10 md:flex-row lg:flex-row">
             <div className="w-[100%] lg:w-[50%] md:w-[50%]">
-              <label className="block mb-1">Name</label>
+              <label className="block mb-1">First Name</label>
               <input
                 type="text"
-                name="name"
-                value={formData.name}
+                name="firstName"
+                value={formData.firstName}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border rounded-lg"
               />
             </div>
 
+            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
+              <label className="block mb-1">Last Name</label>
+              <input
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border rounded-lg"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-between gap-10 md:flex-row lg:flex-row">
             <div className="w-[100%] lg:w-[50%] md:w-[50%]">
               <label className="block mb-1">Email</label>
               <input
@@ -145,20 +209,20 @@ const Profile: React.FC = () => {
                 className="w-full px-4 py-2 border rounded-lg"
               />
             </div>
-          </div>
 
-          <div className="flex flex-col justify-between gap-10 md:flex-row lg:flex-row">
             <div className="w-[100%] lg:w-[50%] md:w-[50%]">
               <label className="block mb-1">Phone</label>
               <input
                 type="text"
-                name="phone"
-                value={formData.phone}
+                name="phone_number"
+                value={formData.phone_number}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border rounded-lg"
               />
             </div>
+          </div>
 
+          <div className="flex flex-col justify-between gap-10 md:flex-row lg:flex-row">
             <div className="w-[100%] lg:w-[50%] md:w-[50%]">
               <label className="block mb-1">Address</label>
               <input
@@ -168,6 +232,21 @@ const Profile: React.FC = () => {
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border rounded-lg"
               />
+            </div>
+
+            <div className="w-[100%] lg:w-[50%] md:w-[50%]">
+              <label className="block mb-1">Gender</label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleSelectChange}
+                className="w-full px-4 py-2 border rounded-lg"
+              >
+                <option value="" disabled>Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
             </div>
           </div>
 
@@ -216,24 +295,7 @@ const Profile: React.FC = () => {
               />
             </div>
           </div>
-          <div className="flex flex-col justify-between  md:flex-row lg:flex-row">
-            <div className="w-[100%] lg:w-[100%] md:w-[100%]">
-              <label className="block mb-1">Gender</label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleSelectChange}
-                className="w-full px-4 py-2 border rounded-lg"
-              >
-                <option value="" disabled>
-                  Select Gender
-                </option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-          </div>
+
 
           <div className="col-span-2">
             <label className="block mb-1">Biography</label>

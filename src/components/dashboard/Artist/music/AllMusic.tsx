@@ -3,9 +3,10 @@ import { MdDelete, MdModeEdit } from "react-icons/md";
 import { IoIosSearch } from "react-icons/io";
 import { useAppDispatch, useAppSelector } from "../../../../Redux/hooks";
 import { RootState } from "../../../../Redux/store";
-import { fetchArtistTracks } from "../../../../Redux/Slices/TrackSlices"; // Adjust import path as needed
+import { fetchArtistTracks,deleteTrack } from "../../../../Redux/Slices/TrackSlices"; // Adjust import path as needed
 import BeatLoader from "react-spinners/BeatLoader";
-
+import ConfirmationCard from "../../../ConfirmationPage/ConfirmationCard";
+import EditMusicModal from './EditMusicModel'
 interface Music {
   id: number;
   title: string;
@@ -26,7 +27,11 @@ const AllMusicTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const musicPerPage = 5;
-
+  const [selectedMusic, setSelectedMusic] = useState<Music | null>(null);
+  const [currentMusicId, setCurrentMusicId] = useState<number | null>(null);
+  const [isConfirmationModalVisible, setModalVisible] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
   useEffect(() => {
     if (user?.user_id) {
       dispatch(fetchArtistTracks(user.user_id));
@@ -56,7 +61,31 @@ const AllMusicTable = () => {
   const totalPages = Math.ceil(filteredMusic.length / musicPerPage);
 
   const handlePageChange = (pageNumber: number) => setCurrentPage(pageNumber);
+  const handleDeleteClick = (id: number) => {
+    setCurrentMusicId(id);
+    setModalVisible(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (currentMusicId !== null) {
+      await dispatch(deleteTrack(currentMusicId));
+      if (user?.user_id) {
+        dispatch(fetchArtistTracks(user.user_id)); 
+      }
+    }
+    setModalVisible(false);
+    setCurrentMusicId(null);
+  };
+  
+
+  const handleDeleteCancel = () => {
+    setModalVisible(false);
+    setCurrentMusicId(null);
+  };
+  const handleEdit = (music: Music) => {
+    setSelectedMusic(music);
+    setIsEditModalOpen(true);
+  };
   if (loading) {
     return <BeatLoader className="text-center py-4"/>;
   }
@@ -117,10 +146,14 @@ const AllMusicTable = () => {
                     <td className="px-4 py-3 border-b">{music.release_date}</td>
                     <td className="px-4 py-3 border-b">
                       <div className="flex items-center space-x-2">
-                        <button className="text-[#1C4A93] hover:text-[#537ec5]">
+                        <button className="text-[#1C4A93] hover:text-[#537ec5]"
+                           onClick={() => handleEdit(music)}
+                        >
                           <MdModeEdit size={20} />
                         </button>
-                        <button className="text-red hover:text-red-700">
+                        <button 
+                        onClick={() => handleDeleteClick(music.id)}
+                         className="text-red hover:text-red-700">
                           <MdDelete size={20} />
                         </button>
                       </div>
@@ -155,7 +188,19 @@ const AllMusicTable = () => {
           </button>
         ))}
       </div>
+      <ConfirmationCard
+        isVisible={isConfirmationModalVisible}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        message="Are you sure you want to delete this Music?"
+      />
+      <EditMusicModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        musicToEdit={selectedMusic}
+      />
     </div>
+    
   );
 };
 

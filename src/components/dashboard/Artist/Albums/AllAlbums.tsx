@@ -1,8 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-
-// @ts-nocheck
-
 import { useState, useEffect } from "react";
 import BeatLoader from "react-spinners/BeatLoader";
 
