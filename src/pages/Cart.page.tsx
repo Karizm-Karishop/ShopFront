@@ -1,8 +1,35 @@
 import { Link } from "react-router-dom";
 import CartCard from "../components/cart/cartCard"
 import ProductCard from "../components/Products/ProductCard";
+import { RootState } from "../Redux/store";
+import { useEffect } from "react";
+import { getCartThunk } from "../Redux/Slices/CartSlice";
+import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 
 const Cart = () => {
+    const user= useAppSelector((state: RootState) => state.loginIn.user?.user_id);
+    const dispatch = useAppDispatch();
+    const cartItems = useAppSelector((state: RootState) => state.cart.items);
+    const groupCartItems= cartItems.reduce((grouped:never|any, item:never|any) => {
+          // Find if the item already exists in the grouped array
+          const existingItem = grouped.find((groupedItem:any) => groupedItem.id === item.id);
+      
+          if (existingItem) {
+            // If it exists, increase the quantity
+            existingItem.product.quantity += 1;
+          } else {
+            // If it doesn't exist, add it with a quantity of 1
+            grouped.push({ ...item, quantity: 1 });
+          }
+      
+          return grouped;
+        }, []);
+        
+      
+      console.log('grouped',groupCartItems)
+      useEffect(() => {
+        dispatch(getCartThunk(user as number));
+      }, []);
     const products = [
         {
             id: 1,
@@ -72,22 +99,39 @@ const Cart = () => {
                 <div className="flex flex-col md:flex-row justify-between pb-5">
                     <div className="flex flex-col md:flex-row items-center gap-2 md:gap-x-4 mb-2 md:mb-0">
                         <h2 className="font-bold text-xl">Products in cart</h2>
-                        <span className="text-sm text-gray-500 text-center md:text-left"> 3 products</span>
+                        <span className="text-sm text-gray-500 text-center md:text-left"> {cartItems.length} products</span>
                     </div>
                     <div className="text-center md:text-right mt-2 md:mt-0">
                         <a href="#" className="inline-block border-2 border-secondary text-secondary rounded-xl p-2 text-sm">View All &gt;</a>
                     </div>
                 </div>
                 <div>
-                    <CartCard />
-                    <CartCard />
-                    <CartCard />
-                    <CartCard />
+                    {
+                        cartItems.map((item:any) =>{
+                            return(
+                                <CartCard
+                                key={item.id}
+                                id={item.id}
+                                owner={item.user_id}
+                                name={item.product.name}
+                                price={item.product.regular_price}
+                                image={item.product.product_image}
+                                quantity={item.quantity}
+                                />
+                            )
+                        })
+                    }
+                    
+                   {cartItems.length>0 ?( 
                     <div className="pt-8 flex flex-row justify-center">
-                        <button className='font-light w-[50%] p-3 px-3 text-white bg-secondary rounded-lg'>
+                        <button  className={`font-light w-[50%] p-3 px-3 text-white bg-secondary rounded-lg`}>
                             <Link to={'/checkout'}>Checkout</Link>
                         </button>
-                    </div>
+                    </div>):(
+                        <div className="py-10 text-center">
+                            <p>No items in the cart.</p>
+                        </div>
+                    )}
                 </div>
                 <div>
                     <div>
@@ -98,6 +142,7 @@ const Cart = () => {
                             {products.slice(2, 6).map((product) => (
                                 <div key={product.id} className="w-full sm:w-1/2 md:w-1/4 px-2 mb-4">
                                     <ProductCard
+                                        id={product.id}
                                         name={product.name}
                                         type={product.type}
                                         price={product.price}

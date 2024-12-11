@@ -31,6 +31,7 @@ const MyShops = () => {
   const categories= useAppSelector((state:RootState)=> state.categories);
   console.log('categories', categories);
   const user = useAppSelector((state: RootState) => state.loginIn.user);
+  console.log(user);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);

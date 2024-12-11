@@ -9,6 +9,8 @@ import AddMusicReducer from './Slices/TrackSlices';
 import TrackReducer from './Slices/TrackSlices'
 import ProductReducer from './Slices/addProductSlice'
 import categorySlice from "./Slices/CategorySlice";
+import  cartSlice  from './Slices/CartSlice';
+import wishlistSlice  from './Slices/WishlistSlice';
 export const store = configureStore({
   reducer: {
     signUp: signUpReducer,
@@ -20,7 +22,9 @@ export const store = configureStore({
     music: AddMusicReducer,
     tracks: TrackReducer,
     product: ProductReducer,
-    categories:categorySlice
+    categories:categorySlice,
+    cart: cartSlice,
+    wishlist: wishlistSlice
   },
 });
 

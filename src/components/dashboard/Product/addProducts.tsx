@@ -15,11 +15,13 @@ import { createProduct } from "../../../Redux/Slices/addProductSlice";
 import { uploadSingleImage, uploadGalleryImages } from "../../../utilis/cloud";
 import { showErrorToast } from "../../../utilis/ToastProps";
 import { useDispatch } from "react-redux";
-import {  AppDispatch } from "../../../Redux/store";
+import {  AppDispatch, RootState } from "../../../Redux/store";
+import { useAppSelector } from "../../../Redux/hooks";
 
 interface FormValues {
   name: string;
   shortDesc: string;
+  artist_id?:string;
   longDesc: string;
   regular_price: number;
   sales_price: number;
@@ -224,6 +226,7 @@ const validationSchema = Yup.object({
 });
 
 const AddProducts: React.FC = () => {
+  const user_id= useAppSelector((state:RootState)=>state?.loginIn?.user?.user_id)
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [category, setCategory] = useState<Icategory[]>([]);
@@ -280,6 +283,7 @@ const AddProducts: React.FC = () => {
     const updatedValues = {
       ...values,
       shop_id: Number(values.shop_id),
+      artist_id: Number(user_id),
       category_id: Number(values.category_id),
       tags,
     };

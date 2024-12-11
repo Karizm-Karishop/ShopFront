@@ -7,9 +7,43 @@ import visa from "../assets/checkout/visa.svg"
 import HSButton from "../components/form/HSButton"
 import { PaymentSuccess, TransactionFail } from "../components/dialog/Dialogs"
 import { useEffect, useState } from "react"
-
+import {FlutterWaveButton, closePaymentModal} from "flutterwave-react-v3"
+import { useAppSelector } from "../Redux/hooks"
+import { RootState } from "../Redux/store"
 const Checkout = () => {
+    const user= useAppSelector((state:RootState)=>state.loginIn.user);
+    const cart= useAppSelector((state:RootState)=>state.cart.items);
+
+    const config = {
+        public_key: 'FLWPUBK_TEST-7e19aff644c56b8d11679ecf218dd685-X',
+        tx_ref: Number(138388918),
+        amount: cart.total,
+        currency: 'RWF',
+        payment_options: 'mobilemoney',
+        customer: {
+          email: user?.email,
+          phone_number: '0791352573',
+          name: user?.firstName,
+        },
+        customizations: {
+          title: 'My store',
+          description: 'Payment for items in cart',
+          logo: 'https://st2.depositphotos.com/4403291/7418/v/450/depositphotos_74189661-stock-illustration-online-shop-log.jpg',
+        },
+      };
+    
+      const fwConfig = {
+        ...config,
+        text: 'Pay with Flutterwave!',
+        callback: (response:any) => {
+           console.log(response);
+          closePaymentModal() // this will close the modal programmatically
+        },
+        onClose: () => {},
+      };
+    
     const [hasSuccess, setHasSuccess] = useState<boolean>(false)
+
     const rand = Math.floor(Math.random() * 10);
     useEffect(() => {
         setHasSuccess(hasSuccess);
@@ -188,7 +222,7 @@ const Checkout = () => {
                                     <div className="w-[80%] flex flex-col gap-y-5 py-6">
                                         <div className="flex flex-row justify-between">
                                             <p className="text-gray-500 font-bold">Total</p>
-                                            <span className="font-bold">UGX 5000</span>
+                                            <span className="font-bold">UGX {cart.total}</span>
                                         </div>
                                         <div className="flex flex-row justify-between">
                                             <p className="text-gray-500 font-bold">Shipping</p>
@@ -197,7 +231,7 @@ const Checkout = () => {
                                         <hr />
                                         <div className="flex flex-row justify-between">
                                             <p className="text-gray-500 font-bold">Total Cost</p>
-                                            <span className="font-bold">UGX 5000</span>
+                                            <span className="font-bold">UGX {cart.total}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -229,7 +263,11 @@ const Checkout = () => {
 
                                     </Accordion>
                                 </div>
+                                
                                 <div className="py-5">
+                                    <FlutterWaveButton {...fwConfig as any
+
+                                    }/>
                                     <HSButton onClick={() => { setHasSuccess(true)}} title="Pay Here" styles="w-full py-4 bg-secondary font-bold" />
                                 </div>
                             </div>

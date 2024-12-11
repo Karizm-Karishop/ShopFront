@@ -45,8 +45,11 @@ export const createProduct = createAsyncThunk(
 
     try {
       const response = await axios.post(apiUrl, productData);
+      console.log(response.data)
       return response.data;
+      
     } catch (error: any) {
+      console.log(error)
       return rejectWithValue(
         error.response?.data?.message || 'Failed to create product'
       );

@@ -71,7 +71,7 @@ const AppRoutes: FunctionComponent = () => {
           <Route
             path="/checkout"
             element={
-              <ProtectedRoute roles={["client"]}>
+              <ProtectedRoute roles={["client","artist","admin"]}>
                 <Checkout />
               </ProtectedRoute>
             }
