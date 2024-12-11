@@ -5,10 +5,13 @@ import { RootState } from '../../../../Redux/store';
 import { showSuccessToast } from '../../../../utilis/ToastProps';
 import { useNavigate } from 'react-router-dom';
 import { categoryThunk } from '../../../../Redux/Slices/CategorySlice';
+import BeatLoader from 'react-spinners/BeatLoader';
+
 
 const url = import.meta.env.VITE_BASE_URL;
 
 const AddShopForm: React.FC = () => {
+  const [loading, setLoading]= useState(false);
   const dispatch = useAppDispatch();
   const categories = useAppSelector((state: RootState) => state.categories.categories);
   console.log('categories', categories);
@@ -39,6 +42,7 @@ const AddShopForm: React.FC = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    setLoading(true);
     const formData = new FormData();
     formData.append('shop_name', shopName);
     formData.append('description', description);
@@ -68,6 +72,7 @@ const AddShopForm: React.FC = () => {
     const data = response.data;
     console.log("data", data);
     if (data) {
+      setLoading(false);
       showSuccessToast(response.data.message);
       navigate('/dashboard/shop/all')
     }
@@ -230,7 +235,9 @@ const AddShopForm: React.FC = () => {
             onClick={handleSubmit}
             className="w-[30%] bg-[#1C4A93] text-white py-2 rounded-md hover:bg-blue-dark transition"
           >
-            Create Shop
+           {loading? (
+                      <BeatLoader color="#ffffff" size={8} />
+                    ) : (" Create Shop")}
           </button>
         </div>
 

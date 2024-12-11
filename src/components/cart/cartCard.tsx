@@ -1,19 +1,74 @@
-import main from "../../assets/main.png";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { showSuccessToast } from "../../utilis/ToastProps";
+import { useAppDispatch } from "../../Redux/hooks";
+import { getCartThunk } from "../../Redux/Slices/CartSlice";
 
 const sizes = ['L', 'M', 'S'];
 const colors = ['bg-gray-300', 'bg-gray-400'];
+interface CartItem{
+  id:number
+  name: string,
+  price: string,
+  image: string,
+  description: string,
+  quantity: number,
+  owner?: number,
+  size: string,
+  color: string
+}
+const CartCard = ({id,name,image, quantity, price, owner}:Partial<CartItem>) => {
+  const [inputquantity, setQuantity]= useState(quantity);
+  const dispatch= useAppDispatch();
+  
+  const handleSetQuantity=(e:any)=>{
+    setQuantity(e.target?.value);
+  }
+  const handleDeleteCartItem=async ()=>{
+    try {
+      const response= await axios.delete(`${import.meta.env.VITE_BASE_URL}/cart/${id}`);
+      if(response.data){
+          showSuccessToast('Item removed from cart successfully')
+          console.log(response.data);
+  }}
+    catch (error) {
+      console.log(error)
+    }}
+  const handleUpdateQuantity=async (payload:number)=>{
+    try {
+      const response= await axios.put(`${import.meta.env.VITE_BASE_URL}/cart/${id}`,{
+        quantity: payload,
+        user_id: owner
+      });
+      if(response.data){
+          console.log(response.data);
+  
+      }
+    } catch (error) {
+      console.log(error)
+    }
 
-const CartCard = () => {
+  }
+  useEffect(()=>{
+   dispatch(getCartThunk(owner!));
+  }, [showSuccessToast])
+  useEffect(()=>{
+    setTimeout(()=>{
+      if(inputquantity && !isNaN(inputquantity) && Number(inputquantity)!==0 && Number(inputquantity)!==quantity){
+        handleUpdateQuantity(Number(inputquantity));
+      }
+    },1000)
+  },[inputquantity])
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-4 py-5">
+      <div className="flex flex-col sm:flex-row gap-4 py-5" key={id}>
         <div className="w-full sm:w-[200px] h-[200px] sm:h-auto">
-          <img src={main} alt="main" className="w-full h-full object-cover" />
+          <img src={image} alt={name} className="w-full h-full object-cover" />
         </div>
         <div className="flex flex-col gap-y-4 w-full">
           <div className="flex flex-row justify-between">
-            <h2 className="text-lg font-bold">Bike</h2>
-            <a href="#" className="text-secondary font-bold">Remove</a>
+            <h2 className="text-lg font-bold">{name}</h2>
+            <a role="button" onClick={handleDeleteCartItem} className="text-secondary font-bold">Remove</a>
           </div>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-y-4 sm:gap-y-0">
             <div className='w-full sm:w-auto'>
@@ -42,13 +97,13 @@ const CartCard = () => {
             <div className='w-full sm:w-auto'>
               <span className="block mb-2">Quantity</span>
               <div className='flex flex-row items-center gap-x-3'>
-                <button className='border-2 font-light p-1 sm:p-2 px-2 sm:px-3 text-secondary rounded-xl bg-gray-200'>+</button>
-                <span className='border-2 font-light p-1 sm:p-2 px-2 sm:px-3 text-secondary rounded-xl bg-gray-200' contentEditable={true}>0</span>
-                <button className='border-2 font-light p-1 sm:p-2 px-2 sm:px-3 text-secondary rounded-xl bg-gray-200'>-</button>
+                <button onClick={()=>setQuantity((prevState)=> Number(prevState)+1)} className='border-2 font-light p-1 sm:p-2 px-2 sm:px-3 text-secondary rounded-xl bg-gray-200'>+</button>
+                <input type="number" onChange={handleSetQuantity} value={inputquantity} className='border-2 w-20 font-light p-1 sm:p-2 px-2 sm:px-3 text-secondary rounded-xl bg-gray-200'/>
+                <button onClick={()=>setQuantity((prevState)=> Number(prevState)-1)} className='border-2 font-light p-1 sm:p-2 px-2 sm:px-3 text-secondary rounded-xl bg-gray-200'>-</button>
               </div>
             </div>
             <div className='w-full sm:w-auto text-right sm:text-left'>
-              <span className="font-bold text-xl">$59.99</span>
+              <span className="font-bold text-xl">{price}</span>
             </div>
           </div>
         </div>

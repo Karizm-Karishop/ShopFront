@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MdClose } from 'react-icons/md';
 import { useAppSelector } from '../../../Redux/hooks';
 import { RootState } from '../../../Redux/store';
+import BeatLoader from 'react-spinners/BeatLoader';
 interface Shop {
     id: number;
     name: string;
@@ -25,6 +26,7 @@ interface EditShopModalProps {
 }
 
 const EditShopModal: React.FC<EditShopModalProps> = ({ isOpen, onClose, shopData, onSubmit }) => {
+  const [loading, setLoading]= useState(false);
   const categories= useAppSelector((state: RootState)=> state.categories.categories);
   const [shopName, setShopName] = useState('');
   const [icon, setIcon] = useState<File | null>(null);
@@ -49,7 +51,7 @@ const EditShopModal: React.FC<EditShopModalProps> = ({ isOpen, onClose, shopData
   }, [shopData, icon]);
 
   const handleSubmit = (e: React.FormEvent) => {
-
+    setLoading(true);
     e.preventDefault();
     if (shopData) {
       
@@ -208,7 +210,10 @@ const EditShopModal: React.FC<EditShopModalProps> = ({ isOpen, onClose, shopData
 
           <div className="flex justify-center">
             <button type="submit" className="bg-[#1C4A93] text-white px-4 py-2 rounded">
-              Save Changes
+            {loading ? (
+                      <BeatLoader color="#ffffff" size={8} />
+                    ) : (
+              "Save Changes")}
             </button>
           </div>
         </form>

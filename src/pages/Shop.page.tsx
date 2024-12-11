@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react"
 import ProductCard from "../components/Products/ProductCard"
-
 import Filter from "../components/Shop/Filter"
-import { SearchRounded} from "@mui/icons-material"
+import { SearchRounded } from "@mui/icons-material"
 import BannerAd from "../components/Shop/bannerAd"
+import axios from "axios"
+import { useAppDispatch, useAppSelector } from "../Redux/hooks"
+import BeatLoader from "react-spinners/BeatLoader"
+import { cartThunk, getCartThunk } from "../Redux/Slices/CartSlice"
+import { RootState } from "../Redux/store"
+import { getwishlistThunk, wishlistThunk } from "../Redux/Slices/WishlistSlice"
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 const products = [
   {
     id: 1,
@@ -87,6 +94,41 @@ const slides = [{
 ]
 
 const Shop = () => {
+  const cart = useAppSelector((state: RootState) => state.cart.items);
+  const wishlist = useAppSelector((state: RootState) => state.wishlist.items);
+  const user= useAppSelector((state: RootState) => state.loginIn.user?.user_id);
+  const dispatch = useAppDispatch();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dbProducts, setProducts] = useState([]);
+  const [isLoading, setLoading] = useState(true);
+  const handleAddCart = (id:number) => {
+    dispatch(cartThunk({user_id:user as number, product_id:id, quantity:1}))
+  };
+
+  const handleAddWishlist = (id:number) => {
+   dispatch(wishlistThunk({user_id:user as number, product_id:id}))
+  }
+  const handleFetchProducts = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/products`)
+      if (response.status === 200) {
+        setProducts(response.data.data);
+        setLoading(false);
+        return response.data.data
+      }
+
+
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  useEffect(() => {
+    handleFetchProducts();
+    dispatch(getCartThunk(user as number));
+    dispatch(getwishlistThunk(user as number));
+    console.log("cart",cart);
+    console.log(dbProducts);
+  }, []);
   const [index, setIndex] = useState(0);
   useEffect(() => {
     const timer =
@@ -97,7 +139,7 @@ const Shop = () => {
   }, [slides.length])
   return (
     <>
-      <div className="w-full px-4 md:w-[90%] m-auto">
+      {!isLoading ? (<div className="w-full px-4 md:w-[90%] m-auto">
         <div className="mx-2 md:mx-5 my-3">
           <p className="text-gray-500">Home &gt; <span className="font-medium text-text">Shop</span></p>
         </div>
@@ -119,7 +161,7 @@ const Shop = () => {
             </div>
             <div className="flex flex-col md:flex-row justify-between pb-5">
               <div className="flex flex-row items-center gap-x-4 mb-2 md:mb-0">
-                <h2 className="font-bold text-l">Products Results</h2><span className="text-sm text-gray-500">100 products</span>
+                <h2 className="font-bold text-l">Products Results</h2><span className="text-sm text-gray-500">{dbProducts.length} products</span>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Sort by &nbsp; &nbsp;</span>
@@ -132,16 +174,20 @@ const Shop = () => {
             </div>
 
             <div className="flex flex-wrap -mx-2">
-              {products.map((product) => (
-                <div key={product.id} className="w-full sm:w-1/2 md:w-1/3 px-2 mb-4">
+              {dbProducts.map((product: any) => (
+                <div key={product.product_id} className="w-full sm:w-1/2 md:w-1/3 px-2 mb-4">
                   <ProductCard
+                    id={product.product_id}
                     name={product.name}
-                    type={product.type}
-                    price={product.price}
-                    image={product.image}
-                    description={product.description}
+                    regularPrice={`${product.regular_price}`}
+                    type={product.tags[0]}
+                    price={`${product.sales_price}`}
+                    image={product.product_image}
+                    description={product.longDesc}
                     rating={product.rating}
-                    discount={product.discount}
+                    discount={"0"}
+                    addCart={() => handleAddCart(product.product_id)}
+                    addToWishlist={() => handleAddWishlist(product.product_id)}
                   />
                 </div>
               ))}
@@ -190,16 +236,18 @@ const Shop = () => {
             </div>
           </div>
           <div className="flex flex-wrap -mx-2">
-            {products.slice(0, 4).map((product) => (
-              <div key={product.id} className="w-full sm:w-1/2 md:w-1/4 px-2 mb-4">
+            {dbProducts.slice(0, 4).map((product: any) => (
+              <div key={product.product_id} className="w-full sm:w-1/2 md:w-1/4 px-2 mb-4">
                 <ProductCard
+                  id={product.product_id}
                   name={product.name}
-                  type={product.type}
-                  price={product.price}
-                  image={product.image}
-                  description={product.description}
+                  regularPrice={`${product.regular_price}`}
+                  type={product.tags[0]}
+                  price={`${product.sales_price}`}
+                  image={product.product_image}
+                  description={product.shortDesc}
                   rating={product.rating}
-                  discount={product.discount}
+                  discount={"0"}
                 />
               </div>
             ))}
@@ -216,16 +264,18 @@ const Shop = () => {
             </div>
           </div>
           <div className="flex flex-wrap -mx-2">
-            {products.slice(2, 6).map((product) => (
-              <div key={product.id} className="w-full sm:w-1/2 md:w-1/4 px-2 mb-4">
+            {dbProducts.slice(2, 6).map((product: any) => (
+              <div key={product.product_id} className="w-full sm:w-1/2 md:w-1/4 px-2 mb-4">
                 <ProductCard
+                  id={product.product_id}
                   name={product.name}
-                  type={product.type}
-                  price={product.price}
-                  image={product.image}
-                  description={product.description}
+                  regularPrice={`${product.regular_price}`}
+                  type={product.tags[0]}
+                  price={`${product.sales_price}`}
+                  image={product.product_image}
+                  description={product.shortDesc}
                   rating={product.rating}
-                  discount={product.discount}
+                  discount={"0"}
                 />
               </div>
             ))}
@@ -286,7 +336,12 @@ const Shop = () => {
             </div>
           </div>
         </section>
-      </div>
+      </div>) : (
+        <div className="flex flex-row justify-center items-center gap-x-4 py-4">
+          <p className="font-bold">Loading products</p>
+          <BeatLoader color="#1E90FF" size={8} />
+        </div>
+      )}
     </>
   )
 }

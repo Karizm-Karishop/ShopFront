@@ -8,15 +8,23 @@ import Profile from "../assets/profile.jpg";
 import { logout } from "../Redux/Slices/LoginSlice";
 import { useAppDispatch, useAppSelector } from "../Redux/hooks";
 import HSButton from "./form/HSButton";
+import { RootState } from "../Redux/store";
+import { getCartThunk } from "../Redux/Slices/CartSlice";
+import { getwishlistThunk } from "../Redux/Slices/WishlistSlice";
 
 function Navbar() {
   const dispatch = useAppDispatch();
-  const user = useAppSelector((state) => state.loginIn.user);
+  const cart = useAppSelector((state: RootState) => state.cart.items);
+  const wishlist = useAppSelector((state: RootState) => state.wishlist.items);
+  const user = useAppSelector((state:RootState) => state.loginIn.user);
   const [toggleMenu, setToggleMenu] = useState(false);
   const [toggleProfileMenu, setToggleProfileMenu] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  useEffect(() => {}, [dispatch]);
+  useEffect(() => {
+    dispatch(getCartThunk(user?.user_id as number));
+    dispatch(getwishlistThunk(user?.user_id as number));
+   }, [dispatch]);
 
   return (
     <div className="relative flex items-center justify-between w-full h-16 shadow-sm bg-white">
@@ -36,52 +44,47 @@ function Navbar() {
       <nav className="hidden lg:flex items-center h-full">
         <Link
           to="/"
-          className={`${
-            location.pathname === "/"
+          className={`${location.pathname === "/"
               ? "border-b-2 border-[#1C4A93] text-[#1C4A93]"
               : "text-gray-600"
-          } h-full flex items-center justify-center px-4`}
+            } h-full flex items-center justify-center px-4`}
         >
           Home
         </Link>
         <Link
           to="/shop"
-          className={`${
-            location.pathname === "/shop"
+          className={`${location.pathname === "/shop"
               ? "border-b-2 border-[#1C4A93] text-[#1C4A93]"
               : "text-gray-600"
-          } h-full flex items-center justify-center px-4`}
+            } h-full flex items-center justify-center px-4`}
         >
           Shop
         </Link>
         <Link
           to="/about"
-          className={`${
-            location.pathname === "/about"
+          className={`${location.pathname === "/about"
               ? "border-b-2 border-[#1C4A93] text-[#1C4A93]"
               : "text-gray-600"
-          } h-full flex items-center justify-center px-4`}
+            } h-full flex items-center justify-center px-4`}
         >
           About Us
         </Link>
         <Link
           to="/contact"
-          className={`${
-            location.pathname === "/contact"
+          className={`${location.pathname === "/contact"
               ? "border-b-2 border-[#1C4A93] text-[#1C4A93]"
               : "text-gray-600"
-          } h-full flex items-center justify-center px-4`}
+            } h-full flex items-center justify-center px-4`}
         >
           Contact
         </Link>
         {!user && (
           <Link
             to="/login"
-            className={`${
-              location.pathname === "/login"
+            className={`${location.pathname === "/login"
                 ? "border-b-2 border-[#1C4A93] text-[#1C4A93]"
                 : "text-gray-600"
-            } h-full flex items-center justify-center px-4`}
+              } h-full flex items-center justify-center px-4`}
           >
             Login
           </Link>
@@ -92,17 +95,23 @@ function Navbar() {
         <div className="flex items-center gap-4">
           <Link className="relative" to="/cart">
             <LuShoppingCart size="22" color="#424856" title="cart" />
-            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-red-600 text-white absolute right-[-0.3rem] top-[-0.2rem] text-xs">
-              0
+            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-red text-white absolute right-[-0.3rem] top-[-0.2rem] text-xs">
+              {cart.length}
             </div>
           </Link>
-          <FiHeart
-            color="#424856"
-            size="22"
-            title="wishlist"
-            className="cursor-pointer"
-            onClick={() => navigate("/wishlist")}
-          />
+          <div className="relative">
+            <FiHeart
+              color="#424856"
+              size="22"
+              title="wishlist"
+              className="cursor-pointer"
+              onClick={() => navigate("/wishlist")}
+            />
+            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-red text-white absolute right-[-0.3rem] top-[-0.2rem] text-xs">
+              {wishlist.length}
+            </div>
+          </div>
+
         </div>
         {user ? (
           <div
