@@ -40,7 +40,6 @@ const MyShops = () => {
   const shopsPerPage = 5;
   const token = localStorage.getItem('token');
   const handleFetchShops = async () => {
-    // Fetching data from the API
     const response = await axios.get(`${BASE_URL}/shops/artist/${user?.user_id}`,
       {
         headers: {

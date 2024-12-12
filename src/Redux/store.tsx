@@ -12,7 +12,7 @@ import categorySlice from "./Slices/CategorySlice";
 import categoryReducer from "./Slices/CategorySlices";
 import bookReducer from './Slices/Bookslices'
 import profile from './Slices/ProfileSlices'
-
+import  NotificationReducer  from './Slices/NotificationSlices';
 export const store = configureStore({
   reducer: {
     signUp: signUpReducer,
@@ -27,7 +27,8 @@ export const store = configureStore({
     categories:categorySlice,
     category:categoryReducer,
     book:bookReducer,
-    profile: profile
+    profile: profile,
+    notifications: NotificationReducer
 
   },
 });

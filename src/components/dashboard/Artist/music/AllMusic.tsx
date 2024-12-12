@@ -77,7 +77,6 @@ const AllMusicTable = () => {
     setCurrentMusicId(null);
   };
   
-
   const handleDeleteCancel = () => {
     setModalVisible(false);
     setCurrentMusicId(null);

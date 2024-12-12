@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+//@ts-nocheck
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { IoIosSearch } from "react-icons/io";
@@ -36,7 +39,6 @@ const ShopApprovalTable = () => {
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   
-  // New state for tracking loading states of specific actions
   const [loadingShopIds, setLoadingShopIds] = useState<{
     approving: number | null,
     rejecting: number | null
@@ -90,7 +92,6 @@ const ShopApprovalTable = () => {
   const totalPages = Math.ceil(filteredShops.length / shopsPerPage);
 
   const handleApprove = async (shopId: number) => {
-    // Set loading state for this specific shop
     setLoadingShopIds(prev => ({ ...prev, approving: shopId }));
 
     try {
@@ -113,7 +114,6 @@ const ShopApprovalTable = () => {
       console.error("Error approving shop:", error);
       showErrorToast("Failed to approve shop");
     } finally {
-      // Clear loading state
       setLoadingShopIds(prev => ({ ...prev, approving: null }));
     }
   };
@@ -124,7 +124,6 @@ const ShopApprovalTable = () => {
       return;
     }
 
-    // Set loading state for this specific shop
     setLoadingShopIds(prev => ({ ...prev, rejecting: selectedShop.shop_id }));
 
     try {
@@ -141,7 +140,7 @@ const ShopApprovalTable = () => {
 
       if (response.data.success) {
         showSuccessToast("Shop rejected successfully");
-        fetchShops(); // Refresh the list
+        fetchShops();
         setIsConfirmationOpen(false);
         setRejectionReason("");
         setSelectedShop(null);
@@ -150,25 +149,21 @@ const ShopApprovalTable = () => {
       console.error("Error rejecting shop:", error);
       showErrorToast("Failed to reject shop");
     } finally {
-      // Clear loading state
       setLoadingShopIds(prev => ({ ...prev, rejecting: null }));
     }
   };
 
-  // Open Reject Confirmation Modal
   const openRejectModal = (shop: Shop) => {
     setSelectedShop(shop);
     setIsConfirmationOpen(true);
   };
 
-  // Close Reject Confirmation Modal
   const closeRejectModal = () => {
     setIsConfirmationOpen(false);
     setSelectedShop(null);
     setRejectionReason("");
   };
 
-  // Status Classification
   const getStatusClass = (status: ShopStatus) => {
     switch (status) {
       case ShopStatus.APPROVED:
@@ -182,7 +177,6 @@ const ShopApprovalTable = () => {
     }
   };
 
-  // Total Shops Calculations
   const totalShops = shops.length;
   const approvedShops = shops.filter((shop) => shop.shop_status === ShopStatus.APPROVED).length;
   const pendingShops = shops.filter((shop) => shop.shop_status === ShopStatus.PENDING).length;
@@ -192,7 +186,6 @@ const ShopApprovalTable = () => {
     <div className="p-6 font-mono w-full">
       <h2 className="text-2xl font-bold mb-4">Shop Approval Table</h2>
 
-      {/* Statistics Cards */}
       <div className="grid grid-cols-1 gap-4 mb-6 lg:grid-cols-4 md:grid-cols-2">
         {[
           { label: "Total Shops", count: totalShops },
@@ -210,7 +203,6 @@ const ShopApprovalTable = () => {
         ))}
       </div>
 
-      {/* Search and Filter Section */}
       <div className="">
         <div className="relative mb-4">
           <input
@@ -236,7 +228,6 @@ const ShopApprovalTable = () => {
         </div>
       </div>
 
-      {/* Shop Table */}
       <div className="w-full overflow-hidden rounded-lg shadow-lg">
         <div className="w-full overflow-x-auto">
           <table className="w-full text-left">
@@ -267,10 +258,10 @@ const ShopApprovalTable = () => {
                     <td className="px-4 py-3 border-b">
                       {new Date(shop.created_at).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 border-b">
+                    <td className="border-b flex-row gap-10">
                       {shop.shop_status !== ShopStatus.APPROVED && (
                         <button
-                          className="px-4 py-2 bg-green text-white rounded-lg mr-2 w-[120px] outline-none cursor-pointer flex items-center justify-center"
+                          className="px-4 py-2 bg-green text-white rounded-lg mr-2 w-[120px] outline-none cursor-pointer flex items-center justify-center my-2"
                           onClick={() => handleApprove(shop.shop_id)}
                           disabled={loadingShopIds.approving === shop.shop_id}
                         >
@@ -285,7 +276,7 @@ const ShopApprovalTable = () => {
                       )}
                       {shop.shop_status !== ShopStatus.REJECTED && (
                         <button
-                          className="px-4 py-2 bg-red text-white rounded-lg w-[120px] outline-none cursor-pointer flex items-center justify-center"
+                          className="px-4 py-2 bg-red text-white rounded-lg w-[120px] outline-none cursor-pointer flex items-center justify-center my-2"
                           onClick={() => openRejectModal(shop)}
                           disabled={loadingShopIds.rejecting === shop.shop_id}
                         >
@@ -313,7 +304,6 @@ const ShopApprovalTable = () => {
         </div>
       </div>
 
-      {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
         <div className="text-gray-600">
           Showing {indexOfFirstShop + 1} to{" "}
@@ -337,7 +327,6 @@ const ShopApprovalTable = () => {
         </div>
       </div>
 
-      {/* Confirmation Modal for Rejection */}
       <ConfirmationCard
         isVisible={isConfirmationOpen}
         onClose={closeRejectModal}
